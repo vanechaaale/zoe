@@ -1,5 +1,7 @@
 import random
 import re
+import token
+
 import discord
 from discord.ext import commands
 from Data import Quotes, gifs
@@ -348,4 +350,6 @@ async def sale(c):
         await c.channel.send(random.choice(Quotes.Zoe_error_message))"""
 
 if __name__ == "__main__":
-    bot.run('ODg3ODE5ODU5NjA4NjEyODY0.YUJsrQ.oPwl6aHIj4R7y8p6D2lrJmMoC_8')
+    with open ('token') as f:
+        token = f.readline()
+    bot.run(token)
