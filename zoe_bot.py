@@ -1,15 +1,11 @@
 import random
 import re
-import token
-
 import discord
 from discord.ext import commands
 from Data import Quotes, gifs
 from riotwatcher import LolWatcher
 from lolesports_api import Lolesports_API
 from fuzzywuzzy import fuzz
-from fuzzywuzzy import process
-import Levenshtein
 
 
 API_KEY = "RGAPI-d59a41c8-3c95-4f3e-83f1-630d9122ba62"
@@ -350,6 +346,6 @@ async def sale(c):
         await c.channel.send(random.choice(Quotes.Zoe_error_message))"""
 
 if __name__ == "__main__":
-    with open ('token') as f:
+    with open('Data/token') as f:
         token = f.readline()
     bot.run(token)
