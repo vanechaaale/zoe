@@ -1,0 +1,18 @@
+gifs = ['https://gfycat.com/equalcontenteagle',
+        'https://gfycat.com/frequentcreamyfirebelliedtoad-twilight-league-aspect-screen-targon',
+        'https://giphy.com/gifs/leagueoflegends-bye-league-of-legends-l04DWtTzSqI8b0bhwv',
+        'https://giphy.com/gifs/leagueoflegends-lol-league-of-legends-riot-games-MZ3Z9R0JMopK7t0ZAK',
+        'https://gfycat.com/agedgrosselectriceel',
+        'https://gfycat.com/waryacademichammerheadshark',
+        'https://tenor.com/view/zoe-league-of-legends-star-guardian-default-dance-dance-gif-14988186',
+        'https://media.discordapp.net/attachments/378031555311828992/557026629356879883/zoedefault.gif',
+        'https://tenor.com/view/zoe-bye-hi-waving-goodbye-gif-15090559',
+        'https://tenor.com/view/feeding-zoe-league-of-legends-lol-no-feeding-gif-17857230',
+        'https://img2.reactor.cc/pics/post/Zoe-%28LoL%29-League-of-Legends-%D1%84%D1%8D%D0%BD%D0%B4%D0%BE%D0%BC%D1%8B'
+        '-wooangson-4609144.gif',
+        'https://media.giphy.com/media/dBaB8C7Mp86Xb2oOUT/giphy.gif',
+        'https://media.giphy.com/media/XZlv9Jiq9CDTuqIpq5/giphy.gif',
+        'https://media.giphy.com/media/MZ3Z9R0JMopK7t0ZAK/giphy.gif',
+        'https://tenor.com/view/zoe-lol-zoe-league-of-legends-zoe-gif-19105619',
+        'https://gfycat.com/electricfaithfulamphibian-league-riot-lol-zoe',
+        ]
