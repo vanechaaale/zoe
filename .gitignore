@@ -1,0 +1,7 @@
+*venv
+*.vscode
+*__pycache__
+lolesports-api-python/lolesports_api.py/
+Data/
+token
+.idea/
