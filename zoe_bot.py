@@ -7,15 +7,21 @@ from Data import Quotes, gifs
 from riotwatcher import LolWatcher
 from lolesports_api import Lolesports_API
 from fuzzywuzzy import fuzz
+import BaseMessageResponse
+import threading
+from tinydb import TinyDB, Query, where
 
-API_KEY = "RGAPI-97357227-08ee-4c50-917c-7ae8d4c23309"
+""" CONSTANTS """
+# read API key
+with open('Data/api_key') as f:
+    API_KEY = f.readline()
 
-# CONSTANTS
 LOL_ESPORTS_LIVE_LINK = 'https://lolesports.com/live/'
 api = Lolesports_API()
 watcher = LolWatcher(API_KEY)
 my_region = 'na1'
 free_champion_ids = watcher.champion.rotations(my_region)
+db = TinyDB('Data/database.json')
 
 # check league's latest version
 latest = watcher.data_dragon.versions_for_region(my_region)['n']['champion']
@@ -24,12 +30,12 @@ static_champ_list = watcher.data_dragon.champions(latest, False, 'en_US')
 
 # champ static list data to dict for looking up
 # Champ_id : Champ_name
-champ_dict = {}
+CHAMP_DICT = {}
 # init data
 for key in static_champ_list['data']:
     row = static_champ_list['data'][key]
     name = row['name']
-    champ_dict[row['key']] = name
+    CHAMP_DICT[row['key']] = name
 
 SPECIAL_CHAMPION_NAME_MATCHES_DICT = {
     "Renata": "Renata Glasc",
@@ -74,6 +80,13 @@ async def on_ready():
     await bot.change_presence(status=discord.Status.online, activity=activity)
 
 
+@bot.command(hidden=True)
+@commands.is_owner()
+async def shutdown(c):
+    await c.channel.send("Logging out...")
+    await bot.close()
+
+
 @bot.event
 async def on_guild_join(guild):
     for channel in guild.text_channels:
@@ -83,11 +96,18 @@ async def on_guild_join(guild):
         break
 
 
+@bot.event
+# async def on_command_error(channel, error):
+async def on_command_error(channel, error):
+    if isinstance(error, commands.CommandNotFound):
+        return
+
+
 @bot.listen()
 async def on_message(message):
     if message.author == bot.user:
         return
-    for cmd in RESPONSES:
+    for cmd in BaseMessageResponse.RESPONSES:
         if cmd.invoke(message) and not is_command(message):
             await cmd.execute(message)
     if message.is_system() and message.type == discord.MessageType.new_member:
@@ -95,92 +115,16 @@ async def on_message(message):
         await message.channel.send(f'"*{quote}*"')
 
 
-class BaseMessageResponse:
-    def __init__(self):
-        pass
-
-    def invoke(self, message: discord.Message) -> bool:
-        raise NotImplementedError
-
-    def execute(self, message: discord.Message):
-        raise NotImplementedError
-
-
-class Zoe(BaseMessageResponse):
-    TEXT_MAP = {
-        'hate': "No, that's not nice!",
-        'love': "Yes! This'll be fun, right?",
-        'bye': 'https://1.bp.blogspot.com/-Oaewrz-7M0E/Wo9PZE-jDaI/AAAAAAAA5yY'
-               '/BOSEiViGD5k7jwcLYur4SvSypBN8p0VuQCLcBGAs/s1600/d59ac85417e4a84d.png '
-    }
-
-    def invoke(self, message: discord.Message) -> bool:
-        return bool(re.search('[Zz][Oo][Ee]', message.content))
-
-    async def execute(self, message: discord.Message):
-        for keyword, quote in Zoe.TEXT_MAP.items():
-            if keyword in message.content.lower():
-                await message.channel.send(f'"*{quote}*"')
-                return
-        quote = random.choice(Quotes.Zoe)
-        await message.channel.send(f'"*{quote}*"')
-
-
-class Ezreal(BaseMessageResponse):
-    def invoke(self, message: discord.Message) -> bool:
-        return bool(re.search('[Ee][Zz][Rr][Ee][Aa][Ll]', message.content))
-
-    async def execute(self, message: discord.Message):
-        quote = random.choice(Quotes.Ezreal)
-        await message.channel.send(f'"*{quote}*"')
-
-
-class Lux(BaseMessageResponse):
-    def invoke(self, message: discord.Message) -> bool:
-        return bool(re.search('[^a-z]?lux(?:[^a-z]|$|^)', message.content, flags=re.IGNORECASE | re.MULTILINE))
-
-    async def execute(self, message: discord.Message):
-        rand = random.randint(1, 2)
-        if rand == 1:
-            quote = random.choice(Quotes.Lux)
-            await message.channel.send(f'"*{quote}*"')
-
-
-class Mooncake(BaseMessageResponse):
-    def invoke(self, message: discord.Message) -> bool:
-        return bool(re.search('[Mm][Oo][Oo][Nn][Cc][Aa][Kk][Ee]', message.content)
-                    or "moon cake" in message.content.lower())
-
-    async def execute(self, message: discord.Message):
-        quote = random.choice(Quotes.Mooncake)
-        await message.channel.send(f'"*{quote}*"')
-
-
-class Xingqui(BaseMessageResponse):
-    def invoke(self, message: discord.Message) -> bool:
-        ratio = fuzz.ratio("Xingqiu", message.content.title())
-        if ratio == 100:
-            return False
-        else:
-            return bool(ratio > 75)
-
-    async def execute(self, message: discord.Message):
-        await message.channel.send("it's spelled xingqiu btw")
-
-
-RESPONSES = [Zoe(), Ezreal(), Lux(), Mooncake(), Xingqui()]
-
-
 @bot.command(brief="Show Zoe guides", description="List of Zoe guides and Zoe players!")
-async def guide(c):
-    await c.send("Here are some guides to the Aspect of Twilight and some streamers who play her!\n\n")
+async def guide(channel):
+    await channel.send("Here are some guides to the Aspect of Twilight and some streamers who play her!\n\n")
     detention = discord.Embed(
         color=0xffb6c1,
     )
     detention.add_field(name="Detention", value="NA Challenger Mid Laner", inline=False)
     detention.set_thumbnail(url='https://pbs.twimg.com/profile_images/1465745862940897281/Q_QU3wNS_400x400.png')
     detention.add_field(name="Youtube Guide", value='https://www.youtube.com/watch?v=YW37o9TVTho')
-    await c.send(embed=detention)
+    await channel.send(embed=detention)
     # vicksy
     vicksy = discord.Embed(
         color=0xffb6c1)
@@ -192,7 +136,7 @@ async def guide(c):
     vicksy.set_thumbnail(
         url="https://static-cdn.jtvnw.net/jtv_user_pictures/37e7e61e-369f-4ba6-8fd6-106f860eca82-profile_image-70x70"
             ".png")
-    await c.send(embed=vicksy)
+    await channel.send(embed=vicksy)
     # pekin woof
     pekin = discord.Embed(color=0xffb6c1, url="https://www.youtube.com/user/PekinGaming")
     pekin.add_field(
@@ -203,7 +147,7 @@ async def guide(c):
         name="Youtube Channel", value="https://www.youtube.com/user/PekinGaming")
     pekin.set_thumbnail(
         url="https://yt3.ggpht.com/ytc/AKedOLTPLJMSw3i8BAqEGeZjEbYlMPlcYwF8Ted417Omew=s88-c-k-c0x00ffffff-no-rj")
-    await c.send(embed=pekin)
+    await channel.send(embed=pekin)
 
 
 @bot.command(brief="Zoe gifs.", description="Beautiful Zoe gifs.")
@@ -211,8 +155,9 @@ async def gif(channel):
     await channel.send(random.choice(gifs.gifs))
 
 
-@bot.command(brief="Show Zoe matchup tips!", description="View Zoe's matchup statistics against a champion")
+@bot.command(brief="Show Zoe matchup tips! (WIP)", description="View Zoe's matchup statistics against a champion")
 async def matchup(channel, champion):
+    champion.lower()
     await channel.send(get_zoe_error_message())
 
 
@@ -228,39 +173,63 @@ async def rotation(c):
     try:
         free_rotation = []
         for champion_id in free_champion_ids['freeChampionIds']:
-            free_rotation.append(champ_dict[str(champion_id)])
+            free_rotation.append(CHAMP_DICT[str(champion_id)])
         free_rotation.sort()
         free_rotation = ', '.join(free_rotation)
         await c.channel.send("The champions in this week's free to play rotation are: " + free_rotation)
-    except:
+    except (Exception,):
         await c.channel.send(get_zoe_error_message())
 
 
-async def pro_all(message):
-    all_live_champs_set = set()
-    live_matches = get_all_live_matches()
-    for live_match in live_matches:
-        if live_match['type'] != 'show' and live_match['state'] == 'inProgress':
-            live_game_data = get_live_game_data(live_match)
-            blue_team = live_game_data['gameMetadata']['blueTeamMetadata']['participantMetadata']
-            red_team = live_game_data['gameMetadata']['redTeamMetadata']['participantMetadata']
-            blue_team_champs = get_champs_on_team(blue_team)
-            red_team_champs = get_champs_on_team_(red_team).append(blue_team_champs)
-            all_live_champs_set.add(red_team_champs)
-    all_live_champs = list(all_live_champs_set).sort()
-    if all_live_champs is None:
-        await message.channel.send("There are currently no live pro games :(")
+@bot.command(brief="Track a champion in professional play",
+             description="Get notified by Zoe Bot whenever a certain champion is being played in a professional match, "
+                         "or use the command again to stop receiving notifications from Zoe Bot.")
+async def track(message, *champion_name):
+    # person calls 'track <champion_name>'
+    # format champion_name
+    champion_name = format_champion_name(' '.join(champion_name))
+    if not champion_name:
+        await message.channel.send(
+            "use '~track <champion>' to be notified when a champion is being played in a professional match!")
+        return
+    # Query champion user id list
+    champion = Query()
+    user_id = message.author.id
+    champ_name_user_ids_dict = db.get(champion['champion_name'] == champion_name)
+    # I tried using a set but it broke whenever i called db.insert()
+    user_ids_list = [] if champ_name_user_ids_dict is None else champ_name_user_ids_dict['user_ids']
+    if champ_name_user_ids_dict is None:
+        user_ids_list.append(user_id)
+        db.insert({'champion_name': champion_name, 'user_ids': user_ids_list})
+        await message.channel.send(f"Now tracking live pro games for {champion_name}.")
+    elif user_id not in user_ids_list:
+        user_ids_list.append(user_id)
+        db.update({'user_ids': user_ids_list}, champion['champion_name'] == champion_name)
+        await message.channel.send(f"Now tracking live pro games for {champion_name}.")
     else:
-        await message.author.send("All champions in live pro games: " + all_live_champs)
+        user_ids_list.remove(user_id)
+        db.update({'user_ids': user_ids_list}, champion['champion_name'] == champion_name)
+        await message.channel.send(f"No longer tracking live pro games for {champion_name}.")
 
 
-def get_champs_on_team(team):
-    live_champs = []
-    for player in team:
-        current_champ = player['championId']
-        if current_champ not in live_champs:
-            live_champs.append(current_champ)
-    return live_champs
+@bot.command(brief="Show list of all champions being tracked for professional play",
+             description="Show a list of all champions that Zoe Bot will notify a Discord User for when one or more "
+                         "champs are being played in a professional game. Remove a champion from this list with the "
+                         "command '~track <champion_name>'.")
+async def subscribed(message):
+    tracked_list = []
+    user_id = message.author.id
+    for champ_name in CHAMP_DICT.values():
+        champion = Query()
+        query_results = db.get(champion['champion_name'] == champ_name)
+        if query_results is not None:
+            user_ids_list = query_results['user_ids']
+            if user_id in user_ids_list:
+                tracked_list.append(champ_name)
+    if len(tracked_list) != 0:
+        await message.channel.send(f"Currently tracking professional matches for: {', '.join(tracked_list)}")
+    else:
+        await message.channel.send(f"You are currently not tracking live games for any champion.")
 
 
 @bot.command(brief="Show list of live games with a champion in professional play",
@@ -281,39 +250,67 @@ async def pro(message, *champion_name):
             return
         matches_found = find_pro_play_champion(champion_name)
         if matches_found:
-            # embed = discord.Embed(color=0xff0000)
             for match in matches_found:
                 await message.send(embed=get_embed_for_player(match))
-        # await message.send(embed=embed)
         else:
             await message.channel.send(f"{champion_name} isn't on Summoner's Rift right now :(")
-    except:
+    except (Exception,):
         await message.channel.send(get_zoe_error_message())
+
+
+async def pro_all(message):
+    all_live_champs = get_all_live_champs()
+    if len(all_live_champs) == 0 or all_live_champs is None:
+        await message.channel.send("There are currently no live pro games :(")
+    else:
+        await message.channel.send("All champions in live pro games: " + ', '.join(all_live_champs))
+
+
+def get_champs_on_team(team):
+    live_champs = set()
+    for player in team:
+        # TODO: MAKE THIS WORK WITH FORMAT CHAMP NAME METHOD
+        champion_name = player['championId']
+        if champion_name == "JarvanIV":
+            current_champ = "Jarvan IV"
+        # reformats the string to put spaces between capital letters :D
+        else:
+            current_champ = check_for_special_name_match(re.sub(r"([A-Z])", r" \1", champion_name)[1:])
+        if current_champ not in live_champs:
+            live_champs.add(current_champ)
+    return live_champs
 
 
 def find_pro_play_champion(champion_name):
     matches_found = []
     live_matches = get_all_live_matches()
     for live_match in live_matches:
-        if live_match['type'] != 'show' and live_match['state'] == 'inProgress':
-            tournament_name = live_match['league']['name']
-            block_name = live_match['blockName']
-            url_slug = live_match['league']['slug']
-            live_game_data = get_live_game_data(live_match)
-            blue_team = live_game_data['gameMetadata']['blueTeamMetadata']['participantMetadata']
-            red_team = live_game_data['gameMetadata']['redTeamMetadata']['participantMetadata']
-            red = is_champion_on_team(blue_team, tournament_name, block_name, champion_name)
-            blue = is_champion_on_team(red_team, tournament_name, block_name, champion_name)
-            match = red if red is not None else blue
-            if match:
-                match.append(url_slug)
-                matches_found.append(match)
+        try:
+            if live_match['type'] != 'show' and live_match['state'] == 'inProgress':
+                tournament_name = live_match['league']['name']
+                block_name = live_match['blockName']
+                url_slug = live_match['league']['slug']
+                team_icons = get_team_icons(live_match)
+                live_game_data = get_live_game_data(live_match)
+                blue_team = live_game_data['gameMetadata']['blueTeamMetadata']['participantMetadata']
+                red_team = live_game_data['gameMetadata']['redTeamMetadata']['participantMetadata']
+                red = is_champion_on_team(blue_team, tournament_name, block_name, champion_name)
+                blue = is_champion_on_team(red_team, tournament_name, block_name, champion_name)
+                match = red if red is not None else blue
+                icon = get_icon(team_icons, red, blue)
+                if match:
+                    match.append(url_slug)
+                    match.append(icon)
+                    matches_found.append(match)
+        except (Exception,):
+            pass
     return matches_found
 
 
 def is_champion_on_team(team, tournament_name, block_name, champion_name):
     for player in team:
-        champion = player['championId']
+        # TODO: FIX THE FORMATTING OF THESE NAMES TO WORK WITH FORMAT_CHAMP_NAME()
+        champion = check_for_special_name_match(re.sub(r"([A-Z])", r" \1", player['championId'])[1:])
         if champion.lower() == champion_name.lower():
             player_name = player['summonerName']
             role = player['role'].capitalize()
@@ -337,16 +334,36 @@ def get_all_live_matches():
 
 
 def get_fuzzy_match(champion_name):
-    for champ in champ_dict.values():
+    for champ in CHAMP_DICT.values():
         if fuzz.token_sort_ratio(champ, champion_name) >= 80:
             return champ
     return ''
 
 
+def get_team_icons(live_match):
+    teams = live_match['match']['teams']
+    red_team_image = teams[0]['image']
+    blue_team_image = teams[1]['image']
+    return red_team_image, blue_team_image
+
+
+def get_icon(team_icons, red, blue):
+    if red is not None:
+        return team_icons[1]
+    elif blue is not None:
+        return team_icons[0]
+    else:
+        return None
+
+
 def get_live_game_data(live_match):
-    match_id = get_live_match_id(live_match['match']['games'])
-    if match_id is not None:
-        return api.get_window(match_id, "")
+    game_id = get_live_match_id(live_match['match']['games'])
+    if game_id is not None:
+        try:
+            return api.get_window(game_id, "")
+        # JSONDecodeError occurs if game is unstarted
+        except JSONDecodeErorr:
+            pass
 
 
 def get_live_match_id(games):
@@ -361,11 +378,14 @@ def get_embed_for_player(match):
     champion_role = match[1]
     tournament_name = match[2]
     url = LOL_ESPORTS_LIVE_LINK + match[3]
+    icon = match[4]
     embed.add_field(
         name=f"{player_name}",
         value=f"Playing {champion_role} in {tournament_name}",
         inline=False)
     embed.add_field(name="Watch live on LolEsports:", value=f"{url}", inline=False)
+    embed.set_thumbnail(url=icon)
+    return embed
 
 
 def get_zoe_error_message():
@@ -374,6 +394,26 @@ def get_zoe_error_message():
         return quote
     else:
         return f'"*{quote}*"'
+
+
+def get_all_live_champs():
+    all_live_champs_set = set()
+    live_matches = get_all_live_matches()
+    for live_match in live_matches:
+        try:
+            if live_match['type'] != 'show' and live_match['state'] == 'inProgress':
+                live_game_data = get_live_game_data(live_match)
+                blue_team = live_game_data['gameMetadata']['blueTeamMetadata']['participantMetadata']
+                red_team = live_game_data['gameMetadata']['redTeamMetadata']['participantMetadata']
+                blue_team_champs = get_champs_on_team(blue_team)
+                red_team_champs = get_champs_on_team(red_team)
+                all_live_champs_set = all_live_champs_set.union(red_team_champs)
+                all_live_champs_set = all_live_champs_set.union(blue_team_champs)
+        except (Exception,):
+            pass
+    all_live_champs = list(all_live_champs_set)
+    all_live_champs.sort()
+    return all_live_champs
 
 
 @matchup.error
@@ -386,10 +426,30 @@ def is_command(message):
     return message.content[0] == '~'
 
 
-@bot.event
-async def on_command_error(channel, error):
-    if isinstance(error, commands.CommandNotFound):
-        return
+# Given a janky version of a champion, format it to be pretty
+#     str given_name: name input as a string
+#     Return properly formatted champion name as a string
+def format_champion_name(champion_name):
+    champion_name = get_fuzzy_match(check_for_special_name_match(champion_name))
+    if champion_name == '':
+        return None
+    else:
+        return champion_name
+
+
+async def check_tracked_champions():
+    threading.Timer(5.0, printit).start()
+    all_live_champs = get_all_live_champs()
+    champion = Query()
+    for champ in all_live_champs:
+        champ_name_user_ids_dict = db.get(champion['champion_name'] == champ)
+        for user_id in champ_name_user_ids_dict:
+            await pro(user_id, champ)
+
+
+async def sendDm(user_id, message):
+    user = await client.fetch_user(user_id)
+    await user.send(message)
 
 
 """ @bot.command(brief="champs and skins on sale", description="champs and skins on sale")
@@ -403,3 +463,4 @@ if __name__ == "__main__":
     with open('Data/token') as f:
         token = f.readline()
     bot.run(token)
+    check_tracked_champions()
