@@ -78,6 +78,7 @@ bot = commands.Bot(command_prefix='~', help_command=help_command,
 async def on_ready():
     activity = discord.Game(name="Do something fun! The world might be ending... Or not!")
     await bot.change_presence(status=discord.Status.online, activity=activity)
+    await check_tracked_champions()
 
 
 @bot.command(hidden=True)
@@ -438,13 +439,14 @@ def format_champion_name(champion_name):
 
 
 async def check_tracked_champions():
-    threading.Timer(5.0, printit).start()
-    all_live_champs = get_all_live_champs()
-    champion = Query()
-    for champ in all_live_champs:
-        champ_name_user_ids_dict = db.get(champion['champion_name'] == champ)
-        for user_id in champ_name_user_ids_dict:
-            await pro(user_id, champ)
+    while True:
+        all_live_champs = get_all_live_champs()
+        champion = Query()
+        for champ in all_live_champs:
+            champ_name_user_ids_dict = db.get(champion['champion_name'] == champ)
+            for user_id in champ_name_user_ids_dict['user_ids']:
+                await pro(user_id, [champ])
+        time.sleep(60)
 
 
 async def sendDm(user_id, message):
@@ -459,8 +461,8 @@ async def sale(c):
     except:
         await c.channel.send(random.choice(Quotes.Zoe_error_message))"""
 
+
 if __name__ == "__main__":
     with open('Data/token') as f:
         token = f.readline()
     bot.run(token)
-    check_tracked_champions()
