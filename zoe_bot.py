@@ -9,7 +9,10 @@ from lolesports_api import Lolesports_API
 from fuzzywuzzy import fuzz
 import BaseMessageResponse
 import threading
+from threading import Thread
 from tinydb import TinyDB, Query, where
+import asyncio
+import time
 
 """ CONSTANTS """
 # read API key
@@ -74,11 +77,57 @@ bot = commands.Bot(command_prefix='~', help_command=help_command,
                    description="I'm Zoe, what's your name?", intents=intents)
 
 
+def main():
+    with open('Data/token') as f:
+        token = f.readline()
+    bot.run(token)
+
+
+# threaded function
+async def check_tracked_champions():
+    while True:
+        all_live_champs = get_all_live_champs()
+        champion = Query()
+        for champ in all_live_champs:
+            champ_name_user_ids_dict = db.get(champion['champion_name'] == champ)
+            if champ_name_user_ids_dict is not None:
+                for user_id in champ_name_user_ids_dict['user_ids']:
+                    matches_found = find_pro_play_champion(champ)
+                    if matches_found:
+                        for match in matches_found:
+                            user = bot.get_user(user_id)
+                            if user is not None:
+                                await user.send(embed=get_embed_for_player(match))
+        time.sleep(60)
+
+
+# @bot.command(hidden=True)
+# @commands.is_owner()
+# async def tracker(ctx):
+#     task1 = asyncio.create_task(
+#         check_tracked_champions())
+#     task2 = asyncio.create_task(
+#         main())
+#     await task1
+#     await task2
+
+#
+# def between_callback():
+#     loop = asyncio.new_event_loop()
+#     asyncio.set_event_loop(loop)
+#
+#     loop.run_until_complete(tracker(None))
+#     loop.close()
+#
+#
+# _thread = threading.Thread(target=between_callback)
+# _thread.start()
+
+
 @bot.event
 async def on_ready():
     activity = discord.Game(name="Do something fun! The world might be ending... Or not!")
     await bot.change_presence(status=discord.Status.online, activity=activity)
-    await check_tracked_champions()
 
 
 @bot.command(hidden=True)
@@ -236,35 +285,37 @@ async def subscribed(message):
 @bot.command(brief="Show list of live games with a champion in professional play",
              description="Given a champion's name, shows a list of all live professional games where the champion is "
                          "being played, or use '~pro all' to see a list of all champions in live games")
-async def pro(message, *champion_name):
+async def pro(channel, *champion_name):
+    if not isinstance(channel, discord.User) and channel is not None:
+        channel = channel.channel
     try:
         original_message = ' '.join(champion_name)
         if not champion_name:
-            await message.channel.send("use '~pro <champion>' to search for a champion currently in pro play!")
+            await channel.send("use '~pro <champion>' to search for a champion currently in pro play!")
             return
         if original_message.lower() == "all":
-            await pro_all(message)
+            await pro_all(channel)
             return
         champion_name = get_fuzzy_match(check_for_special_name_match(original_message))
         if champion_name == '':
-            await message.channel.send(f"No champion with name '{original_message}' was found.")
+            await channel.send(f"No champion with name '{original_message}' was found.")
             return
         matches_found = find_pro_play_champion(champion_name)
         if matches_found:
             for match in matches_found:
-                await message.send(embed=get_embed_for_player(match))
+                await channel.send(embed=get_embed_for_player(match))
         else:
-            await message.channel.send(f"{champion_name} isn't on Summoner's Rift right now :(")
+            await channel.send(f"{champion_name} isn't on Summoner's Rift right now :(")
     except (Exception,):
-        await message.channel.send(get_zoe_error_message())
+        await channel.send(get_zoe_error_message())
 
 
-async def pro_all(message):
+async def pro_all(channel):
     all_live_champs = get_all_live_champs()
     if len(all_live_champs) == 0 or all_live_champs is None:
-        await message.channel.send("There are currently no live pro games :(")
+        await channel.send("There are currently no live pro games :(")
     else:
-        await message.channel.send("All champions in live pro games: " + ', '.join(all_live_champs))
+        await channel.send("All champions in live pro games: " + ', '.join(all_live_champs))
 
 
 def get_champs_on_team(team):
@@ -438,17 +489,6 @@ def format_champion_name(champion_name):
         return champion_name
 
 
-async def check_tracked_champions():
-    while True:
-        all_live_champs = get_all_live_champs()
-        champion = Query()
-        for champ in all_live_champs:
-            champ_name_user_ids_dict = db.get(champion['champion_name'] == champ)
-            for user_id in champ_name_user_ids_dict['user_ids']:
-                await pro(user_id, [champ])
-        time.sleep(60)
-
-
 async def sendDm(user_id, message):
     user = await client.fetch_user(user_id)
     await user.send(message)
@@ -461,8 +501,4 @@ async def sale(c):
     except:
         await c.channel.send(random.choice(Quotes.Zoe_error_message))"""
 
-
-if __name__ == "__main__":
-    with open('Data/token') as f:
-        token = f.readline()
-    bot.run(token)
+main()
