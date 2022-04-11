@@ -27,12 +27,14 @@ free_champion_ids = constants.FREE_CHAMPION_IDS
 
 @bot.event
 async def on_ready():
+    cache_clear_hours = 2
+    check_tracked_mins = 3 * 60
     activity = discord.Game(name="Do something fun! The world might be ending... Or not!")
     await bot.change_presence(status=discord.Status.online, activity=activity)
     while True:
         await const.check_tracked_champions()
-        await const.clear_cache()
-        await asyncio.sleep(180)
+        await const.clear_cache(cache_clear_hours)
+        await asyncio.sleep(check_tracked_mins)
 
 
 @bot.command(hidden=True)
@@ -166,18 +168,11 @@ async def pro(channel, *champion_name):
         await channel.send(const.get_zoe_error_message())
 
 
-# Given champion name -> returns a name if it matches the weird names dictionary
-# "Renata" -> "Renata Glasc"
-
 @matchup.error
 async def matchup_error(ctx, error):
     if isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
         await ctx.send("use '~matchup <champion>' to search for Zoe's matchup statistics against a champion!")
 
-
-# Given a janky version of a champion, format it to be pretty
-#     str given_name: name input as a string
-#     Return properly formatted champion name as a string
 
 """ @bot.command(brief="champs and skins on sale", description="champs and skins on sale")
 async def sale(c):

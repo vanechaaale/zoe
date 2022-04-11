@@ -31,6 +31,43 @@ latest = WATCHER.data_dragon.versions_for_region(my_region)['n']['champion']
 # Lets get some champions static information
 static_champ_list = WATCHER.data_dragon.champions(latest, False, 'en_US')
 
+SPECIAL_CHAMPION_NAME_MATCHES_DICT = {
+    "Renata": "Renata Glasc",
+    "Glasc": "Renata Glasc",
+    "Jarvan": "Jarvan IV",
+    "Aurelion": "Aurelion Sol",
+    "Lee": "Lee Sin",
+    "Yi": "Master Yi",
+    "Nunu": "Nunu & Willump",
+    "Tahm": "Tahm Kench",
+    "TF": "Twisted Fate",
+    "MonkeyKing": "Wukong",
+    "Monkey King": "Wukong",
+    "Asol": "Aurelion Sol",
+    "Powder": "Jinx",
+    "Violet": "Vi",
+    "The Aspect of Twilight": "Zoe",
+    "TK": "Tahm Kench",
+    "Ali": "Alistar",
+    "Mundo": "Dr. Mundo",
+    "Kaisa": "Kai'Sa",
+    "Khazix": "Kha'Zix",
+    "MF": "Miss Fortune",
+    "Reksai": "Rek'Sai",
+    "Velkoz": "Vel'koz",
+    "Xin": "Xin Zhao",
+}
+
+CACHE = {}
+
+help_command = commands.DefaultHelpCommand(no_category='List of Zoe Bot Commands')
+intents = discord.Intents.default()
+intents.members = True
+
+BOT = commands.Bot(
+    command_prefix='~', help_command=help_command,
+    description="I'm Zoe, what's your name?", intents=intents)
+
 
 class Constants:
     def __init__(self):
@@ -44,6 +81,7 @@ class Constants:
             CHAMP_DICT[row['key']] = name
         self.champ_dict = CHAMP_DICT
 
+    # Send list of all champions in live pro games
     async def pro_all(self, channel):
         all_live_champs = self.get_all_live_champs()
         if len(all_live_champs) == 0 or all_live_champs is None:
@@ -54,7 +92,7 @@ class Constants:
     def get_champs_on_team(self, team):
         live_champs = set()
         for player in team:
-            # TODO: MAKE THIS WORK WITH FORMAT CHAMP NAME METHOD
+            # self.format_champion_name() doesn't work with spaces so player['championId'] breaks it
             champion_name = player['championId']
             if champion_name == "JarvanIV":
                 current_champ = "Jarvan IV"
@@ -99,7 +137,7 @@ class Constants:
     # if the given champ is on the team
     def is_champion_on_team(self, team, tournament_name, block_name, champion_name):
         for player in team:
-            # TODO: FIX THE FORMATTING OF THESE NAMES TO WORK WITH FORMAT_CHAMP_NAME()
+            # player['championId'] wont include spaces which breaks format_champion_name(), hence why it is not used
             champion = self.check_for_special_name_match(re.sub(r"([A-Z])", r" \1", player['championId'])[1:])
             if champion.lower() == champion_name.lower():
                 player_name = player['summonerName']
@@ -127,22 +165,21 @@ class Constants:
         if game_id not in CACHE:
             CACHE[game_id]: datetime.datetime.now()
             user = bot.get_user(user_id)
-            if user is not None:
-                await user.send(embed=self.get_embed_for_player(player_champ_tourney_info))
+            # if user is not None: THIS LINE MIGHT NOT BE NEEDED
+            await user.send(embed=self.get_embed_for_player(player_champ_tourney_info))
 
-    async def clear_cache(self):
-        while True:
-            # 2 hours in between cache clears
-            h = 2
-            hours = datetime.time(h, 0)
-            present = datetime.datetime.now()
-            if CACHE:
-                for key, value in CACHE:
-                    delta = (present - value).total_seconds()
-                    if delta > hours * 3600:
-                        CACHE.pop(key)
-            await asyncio.sleep(h * 3600)
+    # Clear cache every h hours
+    async def clear_cache(self, h):
+        # 2 hours in between cache clears
+        hours = datetime.time(h, 0)
+        present = datetime.datetime.now()
+        if CACHE:
+            for key, value in CACHE:
+                delta = (present - value).total_seconds()
+                if delta > hours * 3600:
+                    CACHE.pop(key)
 
+    # Renata -> Renata Glasc
     def check_for_special_name_match(self, champion_name):
         for special_name, official_name in SPECIAL_CHAMPION_NAME_MATCHES_DICT.items():
             if fuzz.ratio(special_name.lower(), champion_name.lower()) >= 80:
@@ -174,6 +211,7 @@ class Constants:
         else:
             return None
 
+    # Gather game data for a live game in a match
     def get_live_game_data(self, live_match):
         game_id = self.get_live_match_id(live_match['match']['games'])
         if game_id is not None:
@@ -183,18 +221,20 @@ class Constants:
             except JSONDecodeErorr:
                 pass
 
+    # Given a bunch of games in a match, return the match id of the one in progress
     def get_live_match_id(self, games):
         for game in games:
             if game['state'] == "inProgress":
                 return int(game['id'])
 
-    def get_embed_for_player(self, match):
+    # Given player_champ_tourney_etc info, returns an embed with all relevant information attached
+    def get_embed_for_player(self, player_champ_tourney_info):
         embed = discord.Embed(color=0x87cefa)
-        player_name = match[0]
-        champion_role = match[1]
-        tournament_name = match[2]
-        url = LOL_ESPORTS_LIVE_LINK + match[3]
-        icon = match[4]
+        player_name = player_champ_tourney_info[0]
+        champion_role = player_champ_tourney_info[1]
+        tournament_name = player_champ_tourney_info[2]
+        url = LOL_ESPORTS_LIVE_LINK + player_champ_tourney_info[3]
+        icon = player_champ_tourney_info[4]
         embed.add_field(
             name=f"{player_name}",
             value=f"Playing {champion_role} in {tournament_name}",
@@ -210,6 +250,7 @@ class Constants:
         else:
             return f'"*{quote}*"'
 
+    # Return a list of all champs currently in pro play
     def get_all_live_champs(self):
         all_live_champs_set = set()
         live_matches = self.get_all_live_matches()
@@ -229,9 +270,13 @@ class Constants:
         all_live_champs.sort()
         return all_live_champs
 
+    # Does the str start with '~'?
     def is_command(self, message):
         return message.content[0] == '~'
 
+    # Given a janky version of a champion, format it to be pretty
+    #     str given_name: name input as a string
+    #     Return properly formatted champion name as a string
     def format_champion_name(self, champion_name):
         champion_name = self.get_fuzzy_match(self.check_for_special_name_match(champion_name))
         if champion_name == '':
@@ -242,41 +287,3 @@ class Constants:
     async def sendDm(self, user_id, message):
         user = await client.fetch_user(user_id)
         await user.send(message)
-
-
-SPECIAL_CHAMPION_NAME_MATCHES_DICT = {
-    "Renata": "Renata Glasc",
-    "Glasc": "Renata Glasc",
-    "Jarvan": "Jarvan IV",
-    "Aurelion": "Aurelion Sol",
-    "Lee": "Lee Sin",
-    "Yi": "Master Yi",
-    "Nunu": "Nunu & Willump",
-    "Tahm": "Tahm Kench",
-    "TF": "Twisted Fate",
-    "MonkeyKing": "Wukong",
-    "Monkey King": "Wukong",
-    "Asol": "Aurelion Sol",
-    "Powder": "Jinx",
-    "Violet": "Vi",
-    "The Aspect of Twilight": "Zoe",
-    "TK": "Tahm Kench",
-    "Ali": "Alistar",
-    "Mundo": "Dr. Mundo",
-    "Kaisa": "Kai'Sa",
-    "Khazix": "Kha'Zix",
-    "MF": "Miss Fortune",
-    "Reksai": "Rek'Sai",
-    "Velkoz": "Vel'koz",
-    "Xin": "Xin Zhao",
-}
-
-CACHE = {}
-
-help_command = commands.DefaultHelpCommand(no_category='List of Zoe Bot Commands')
-intents = discord.Intents.default()
-intents.members = True
-
-BOT = commands.Bot(
-    command_prefix='~', help_command=help_command,
-    description="I'm Zoe, what's your name?", intents=intents)
