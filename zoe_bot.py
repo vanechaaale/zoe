@@ -13,121 +13,23 @@ from threading import Thread
 from tinydb import TinyDB, Query, where
 import asyncio
 import time
+from champion_tracker import Tracker
+import constants
 
 """ CONSTANTS """
-# read API key
-with open('Data/api_key') as f:
-    API_KEY = f.readline()
-
-LOL_ESPORTS_LIVE_LINK = 'https://lolesports.com/live/'
-api = Lolesports_API()
-watcher = LolWatcher(API_KEY)
-my_region = 'na1'
-free_champion_ids = watcher.champion.rotations(my_region)
-db = TinyDB('Data/database.json')
-
-# check league's latest version
-latest = watcher.data_dragon.versions_for_region(my_region)['n']['champion']
-# Lets get some champions static information
-static_champ_list = watcher.data_dragon.champions(latest, False, 'en_US')
-
-# champ static list data to dict for looking up
-# Champ_id : Champ_name
-CHAMP_DICT = {}
-# init data
-for key in static_champ_list['data']:
-    row = static_champ_list['data'][key]
-    name = row['name']
-    CHAMP_DICT[row['key']] = name
-
-SPECIAL_CHAMPION_NAME_MATCHES_DICT = {
-    "Renata": "Renata Glasc",
-    "Glasc": "Renata Glasc",
-    "Jarvan": "Jarvan IV",
-    "Aurelion": "Aurelion Sol",
-    "Lee": "Lee Sin",
-    "Yi": "Master Yi",
-    "Nunu": "Nunu & Willump",
-    "Tahm": "Tahm Kench",
-    "TF": "Twisted Fate",
-    "MonkeyKing": "Wukong",
-    "Monkey King": "Wukong",
-    "Asol": "Aurelion Sol",
-    "Powder": "Jinx",
-    "Violet": "Vi",
-    "The Aspect of Twilight": "Zoe",
-    "TK": "Tahm Kench",
-    "Ali": "Alistar",
-    "Mundo": "Dr. Mundo",
-    "Kaisa": "Kai'Sa",
-    "Khazix": "Kha'Zix",
-    "MF": "Miss Fortune",
-    "Reksai": "Rek'Sai",
-    "Velkoz": "Vel'koz",
-    "Xin": "Xin Zhao",
-}
-
-intents = discord.Intents.default()
-intents.members = True
-
-help_command = commands.DefaultHelpCommand(
-    no_category='List of Zoe Bot Commands')
-
-bot = commands.Bot(command_prefix='~', help_command=help_command,
-                   description="I'm Zoe, what's your name?", intents=intents)
-
-
-def main():
-    with open('Data/token') as f:
-        token = f.readline()
-    bot.run(token)
-
-
-# threaded function
-async def check_tracked_champions():
-    while True:
-        all_live_champs = get_all_live_champs()
-        champion = Query()
-        for champ in all_live_champs:
-            champ_name_user_ids_dict = db.get(champion['champion_name'] == champ)
-            if champ_name_user_ids_dict is not None:
-                for user_id in champ_name_user_ids_dict['user_ids']:
-                    matches_found = find_pro_play_champion(champ)
-                    if matches_found:
-                        for match in matches_found:
-                            user = bot.get_user(user_id)
-                            if user is not None:
-                                await user.send(embed=get_embed_for_player(match))
-        time.sleep(60)
-
-
-# @bot.command(hidden=True)
-# @commands.is_owner()
-# async def tracker(ctx):
-#     task1 = asyncio.create_task(
-#         check_tracked_champions())
-#     task2 = asyncio.create_task(
-#         main())
-#     await task1
-#     await task2
-
-#
-# def between_callback():
-#     loop = asyncio.new_event_loop()
-#     asyncio.set_event_loop(loop)
-#
-#     loop.run_until_complete(tracker(None))
-#     loop.close()
-#
-#
-# _thread = threading.Thread(target=between_callback)
-# _thread.start()
+bot = constants.BOT
+api = constants.API
+CHAMP_DICT = constants.init_data()
 
 
 @bot.event
 async def on_ready():
     activity = discord.Game(name="Do something fun! The world might be ending... Or not!")
     await bot.change_presence(status=discord.Status.online, activity=activity)
+    tracker = Tracker()
+    while True:
+        await asyncio.sleep(60)
+        tracker.check_tracked_champions()
 
 
 @bot.command(hidden=True)
@@ -229,57 +131,6 @@ async def rotation(c):
         await c.channel.send("The champions in this week's free to play rotation are: " + free_rotation)
     except (Exception,):
         await c.channel.send(get_zoe_error_message())
-
-
-@bot.command(brief="Track a champion in professional play",
-             description="Get notified by Zoe Bot whenever a certain champion is being played in a professional match, "
-                         "or use the command again to stop receiving notifications from Zoe Bot.")
-async def track(message, *champion_name):
-    # person calls 'track <champion_name>'
-    # format champion_name
-    champion_name = format_champion_name(' '.join(champion_name))
-    if not champion_name:
-        await message.channel.send(
-            "use '~track <champion>' to be notified when a champion is being played in a professional match!")
-        return
-    # Query champion user id list
-    champion = Query()
-    user_id = message.author.id
-    champ_name_user_ids_dict = db.get(champion['champion_name'] == champion_name)
-    # I tried using a set but it broke whenever i called db.insert()
-    user_ids_list = [] if champ_name_user_ids_dict is None else champ_name_user_ids_dict['user_ids']
-    if champ_name_user_ids_dict is None:
-        user_ids_list.append(user_id)
-        db.insert({'champion_name': champion_name, 'user_ids': user_ids_list})
-        await message.channel.send(f"Now tracking live pro games for {champion_name}.")
-    elif user_id not in user_ids_list:
-        user_ids_list.append(user_id)
-        db.update({'user_ids': user_ids_list}, champion['champion_name'] == champion_name)
-        await message.channel.send(f"Now tracking live pro games for {champion_name}.")
-    else:
-        user_ids_list.remove(user_id)
-        db.update({'user_ids': user_ids_list}, champion['champion_name'] == champion_name)
-        await message.channel.send(f"No longer tracking live pro games for {champion_name}.")
-
-
-@bot.command(brief="Show list of all champions being tracked for professional play",
-             description="Show a list of all champions that Zoe Bot will notify a Discord User for when one or more "
-                         "champs are being played in a professional game. Remove a champion from this list with the "
-                         "command '~track <champion_name>'.")
-async def subscribed(message):
-    tracked_list = []
-    user_id = message.author.id
-    for champ_name in CHAMP_DICT.values():
-        champion = Query()
-        query_results = db.get(champion['champion_name'] == champ_name)
-        if query_results is not None:
-            user_ids_list = query_results['user_ids']
-            if user_id in user_ids_list:
-                tracked_list.append(champ_name)
-    if len(tracked_list) != 0:
-        await message.channel.send(f"Currently tracking professional matches for: {', '.join(tracked_list)}")
-    else:
-        await message.channel.send(f"You are currently not tracking live games for any champion.")
 
 
 @bot.command(brief="Show list of live games with a champion in professional play",
@@ -501,4 +352,7 @@ async def sale(c):
     except:
         await c.channel.send(random.choice(Quotes.Zoe_error_message))"""
 
-main()
+# Start up the bot
+with open('Data/token') as f:
+    token = f.readline()
+bot.run(token)
