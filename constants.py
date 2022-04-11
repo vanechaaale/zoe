@@ -3,7 +3,7 @@ import re
 import discord
 from discord.ext import commands
 import Data
-from Data import Quotes, gifs
+from Data import Quotes, gifs, cache
 from riotwatcher import LolWatcher
 from lolesports_api import Lolesports_API
 from fuzzywuzzy import fuzz
@@ -14,6 +14,7 @@ from tinydb import TinyDB, Query, where
 import asyncio
 import time
 import constants
+import datetime
 
 # read API key
 with open('Data/api_key') as f:
@@ -64,6 +65,8 @@ class Constants:
                 live_champs.add(current_champ)
         return live_champs
 
+    # Given a champion name, searches all live pro games and returns a list of tuples containing information about
+    # the player, their champ name, role, and tourney
     def find_pro_play_champion(self, champion_name):
         matches_found = []
         live_matches = self.get_all_live_matches()
@@ -79,16 +82,18 @@ class Constants:
                     red_team = live_game_data['gameMetadata']['redTeamMetadata']['participantMetadata']
                     red = self.is_champion_on_team(blue_team, tournament_name, block_name, champion_name)
                     blue = self.is_champion_on_team(red_team, tournament_name, block_name, champion_name)
-                    match = red if red is not None else blue
+                    player_champ_tourney_info = red if red is not None else blue
                     icon = self.get_icon(team_icons, red, blue)
-                    if match:
-                        match.append(url_slug)
-                        match.append(icon)
-                        matches_found.append(match)
+                    if player_champ_tourney_info:
+                        player_champ_tourney_info.append(url_slug)
+                        player_champ_tourney_info.append(icon)
+                        matches_found.append(player_champ_tourney_info)
             except (Exception,):
                 pass
         return matches_found
 
+    # Given the red or blue side, tourney name, block name, and champ name, returns the player_champ_tourney_info
+    # if the given champ is on the team
     def is_champion_on_team(self, team, tournament_name, block_name, champion_name):
         for player in team:
             # TODO: FIX THE FORMATTING OF THESE NAMES TO WORK WITH FORMAT_CHAMP_NAME()
@@ -99,25 +104,44 @@ class Constants:
                 return [player_name, f"{champion_name} {role}", f"{tournament_name} {block_name}"]
         return None
 
-    # threaded function
+    c = cache.CACHE
+
+    # Every minute, checks all live champions and their db of subscribed users to message the users about a game
+    # where the champion is being played, then updates the cache if the user has not already been messaged
     async def check_tracked_champions(self):
         while True:
             all_live_champs = self.get_all_live_champs()
             champion = Query()
-            # if len(all_live_champs) == 0:
-            #     user = bot.get_user(226105055051382788)
-            #     await user.send("NO MATCHES LOL")
             for champ in all_live_champs:
                 champ_name_user_ids_dict = db.get(champion['champion_name'] == champ)
                 if champ_name_user_ids_dict is not None:
                     for user_id in champ_name_user_ids_dict['user_ids']:
                         matches_found = self.find_pro_play_champion(champ)
                         if matches_found:
-                            for match in matches_found:
-                                user = bot.get_user(user_id)
-                                if user is not None:
-                                    await user.send(embed=get_embed_for_player(match))
+                            for player_champ_tourney_info in matches_found:
+                                games = player_champ_tourney_info['games']
+                                game_id = self.get_live_match_id(games)
+                                await self.update_cache(game_id, user_id)
+            await asyncio.sleep(60)
 
+    # update cache with new game ids upon seeing them for the first time, else it does nothing and won't msg users
+    async def update_cache(self, game_id, user_id):
+        if game_id not in cache:
+            c[game_id]: datetime.datetime.now()
+            user = bot.get_user(user_id)
+            if user is not None:
+                await user.send(embed=self.get_embed_for_player(player_champ_tourney_info))
+
+    async def clear_cache(self):
+        while True:
+            # 2 hours in between cache clears
+            hours = 2*3600
+            present = datetime.datetime.now()
+            if cache:
+                for key, value in cache:
+                    if present - value > hours:
+                        cache.pop(key)
+            await asyncio.sleep(hours)
 
     def check_for_special_name_match(self, champion_name):
         for special_name, official_name in SPECIAL_CHAMPION_NAME_MATCHES_DICT.items():
