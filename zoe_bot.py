@@ -29,7 +29,9 @@ free_champion_ids = constants.FREE_CHAMPION_IDS
 async def on_ready():
     activity = discord.Game(name="Do something fun! The world might be ending... Or not!")
     await bot.change_presence(status=discord.Status.online, activity=activity)
-    await const.check_tracked_champions()
+    while True:
+        await const.check_tracked_champions()
+        await asyncio.sleep(180)
 
 
 @bot.command(hidden=True)

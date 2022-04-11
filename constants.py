@@ -76,6 +76,7 @@ class Constants:
                     tournament_name = live_match['league']['name']
                     block_name = live_match['blockName']
                     url_slug = live_match['league']['slug']
+                    game_id = self.get_live_match_id(live_match['match']['games'])
                     team_icons = self.get_team_icons(live_match)
                     live_game_data = self.get_live_game_data(live_match)
                     blue_team = live_game_data['gameMetadata']['blueTeamMetadata']['participantMetadata']
@@ -87,6 +88,8 @@ class Constants:
                     if player_champ_tourney_info:
                         player_champ_tourney_info.append(url_slug)
                         player_champ_tourney_info.append(icon)
+                        player_champ_tourney_info.append(game_id)
+                        # Added URL, Icon, and Game ID to the player, champ, tourney info tuple
                         matches_found.append(player_champ_tourney_info)
             except (Exception,):
                 pass
@@ -109,20 +112,17 @@ class Constants:
     # Every minute, checks all live champions and their db of subscribed users to message the users about a game
     # where the champion is being played, then updates the cache if the user has not already been messaged
     async def check_tracked_champions(self):
-        while True:
-            all_live_champs = self.get_all_live_champs()
-            champion = Query()
-            for champ in all_live_champs:
-                champ_name_user_ids_dict = db.get(champion['champion_name'] == champ)
-                if champ_name_user_ids_dict is not None:
-                    for user_id in champ_name_user_ids_dict['user_ids']:
-                        matches_found = self.find_pro_play_champion(champ)
-                        if matches_found:
-                            for player_champ_tourney_info in matches_found:
-                                games = player_champ_tourney_info['games']
-                                game_id = self.get_live_match_id(games)
-                                await self.update_cache(game_id, user_id)
-            await asyncio.sleep(60)
+        all_live_champs = self.get_all_live_champs()
+        champion = Query()
+        for champ in all_live_champs:
+            champ_name_user_ids_dict = db.get(champion['champion_name'] == champ)
+            if champ_name_user_ids_dict is not None:
+                for user_id in champ_name_user_ids_dict['user_ids']:
+                    matches_found = self.find_pro_play_champion(champ)
+                    if matches_found:
+                        for player_champ_tourney_info in matches_found:
+                            game_id = player_champ_tourney_info[5]
+                            await self.update_cache(game_id, user_id)
 
     # update cache with new game ids upon seeing them for the first time, else it does nothing and won't msg users
     async def update_cache(self, game_id, user_id):
@@ -135,7 +135,7 @@ class Constants:
     async def clear_cache(self):
         while True:
             # 2 hours in between cache clears
-            hours = 2*3600
+            hours = 2 * 3600
             present = datetime.datetime.now()
             if cache:
                 for key, value in cache:
