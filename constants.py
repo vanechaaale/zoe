@@ -107,8 +107,6 @@ class Constants:
                 return [player_name, f"{champion_name} {role}", f"{tournament_name} {block_name}"]
         return None
 
-    c = cache.CACHE
-
     # Every minute, checks all live champions and their db of subscribed users to message the users about a game
     # where the champion is being played, then updates the cache if the user has not already been messaged
     async def check_tracked_champions(self):
@@ -126,8 +124,8 @@ class Constants:
 
     # update cache with new game ids upon seeing them for the first time, else it does nothing and won't msg users
     async def update_cache(self, game_id, user_id):
-        if game_id not in cache:
-            c[game_id]: datetime.datetime.now()
+        if game_id not in CACHE:
+            CACHE[game_id]: datetime.datetime.now()
             user = bot.get_user(user_id)
             if user is not None:
                 await user.send(embed=self.get_embed_for_player(player_champ_tourney_info))
@@ -135,13 +133,15 @@ class Constants:
     async def clear_cache(self):
         while True:
             # 2 hours in between cache clears
-            hours = 2 * 3600
+            h = 2
+            hours = datetime.time(h, 0)
             present = datetime.datetime.now()
-            if cache:
-                for key, value in cache:
-                    if present - value > hours:
-                        cache.pop(key)
-            await asyncio.sleep(hours)
+            if CACHE:
+                for key, value in CACHE:
+                    delta = (present - value).total_seconds()
+                    if delta > hours * 3600:
+                        CACHE.pop(key)
+            await asyncio.sleep(h * 3600)
 
     def check_for_special_name_match(self, champion_name):
         for special_name, official_name in SPECIAL_CHAMPION_NAME_MATCHES_DICT.items():
@@ -270,6 +270,8 @@ SPECIAL_CHAMPION_NAME_MATCHES_DICT = {
     "Velkoz": "Vel'koz",
     "Xin": "Xin Zhao",
 }
+
+CACHE = {}
 
 help_command = commands.DefaultHelpCommand(no_category='List of Zoe Bot Commands')
 intents = discord.Intents.default()

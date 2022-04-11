@@ -31,6 +31,7 @@ async def on_ready():
     await bot.change_presence(status=discord.Status.online, activity=activity)
     while True:
         await const.check_tracked_champions()
+        await const.clear_cache()
         await asyncio.sleep(180)
 
 
