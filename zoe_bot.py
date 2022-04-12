@@ -122,7 +122,7 @@ async def matchup(channel, champion):
 
 @bot.command(brief="Paddle Star Damage Calculator (WIP)",
              description="Zoe Q damage calculator based on items, runes, and masteries")
-async def damage_calc(channel):
+async def psdc(channel):
     await channel.send(const.get_zoe_error_message())
 
 
