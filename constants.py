@@ -24,7 +24,9 @@ API = Lolesports_API()
 WATCHER = LolWatcher(API_KEY)
 my_region = 'na1'
 FREE_CHAMPION_IDS = WATCHER.champion.rotations(my_region)
-db = TinyDB('Data/test_database.json')
+
+db = TinyDB('Data/database.json')
+# db = TinyDB('Data/test_database.json')
 
 # check league's latest version
 latest = WATCHER.data_dragon.versions_for_region(my_region)['n']['champion']
