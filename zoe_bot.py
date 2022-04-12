@@ -21,7 +21,7 @@ const = Constants()
 bot = constants.BOT
 api = constants.API
 CHAMP_DICT = const.champ_dict
-db = constants.DB
+db = constants.db
 free_champion_ids = constants.FREE_CHAMPION_IDS
 
 

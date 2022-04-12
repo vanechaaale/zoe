@@ -24,7 +24,7 @@ API = Lolesports_API()
 WATCHER = LolWatcher(API_KEY)
 my_region = 'na1'
 FREE_CHAMPION_IDS = WATCHER.champion.rotations(my_region)
-DB = TinyDB('Data/database.json')
+db = TinyDB('Data/test_database.json')
 
 # check league's latest version
 latest = WATCHER.data_dragon.versions_for_region(my_region)['n']['champion']
@@ -58,7 +58,7 @@ SPECIAL_CHAMPION_NAME_MATCHES_DICT = {
     "Xin": "Xin Zhao",
 }
 
-CACHE = {}
+CACHE = dict()
 
 help_command = commands.DefaultHelpCommand(no_category='List of Zoe Bot Commands')
 intents = discord.Intents.default()
@@ -157,16 +157,19 @@ class Constants:
                     matches_found = self.find_pro_play_champion(champ)
                     if matches_found:
                         for player_champ_tourney_info in matches_found:
-                            game_id = player_champ_tourney_info[5]
-                            await self.update_cache(game_id, user_id)
+                            await self.update_cache(user_id, player_champ_tourney_info)
 
     # update cache with new game ids upon seeing them for the first time, else it does nothing and won't msg users
-    async def update_cache(self, game_id, user_id):
-        if game_id not in CACHE:
-            CACHE[game_id]: datetime.datetime.now()
-            user = bot.get_user(user_id)
+    async def update_cache(self, user_id, player_champ_tourney_info):
+        game_id = player_champ_tourney_info[5]
+        champion_info = player_champ_tourney_info[1]
+        champ_game_tuple = champion_info, game_id
+        if champ_game_tuple not in CACHE:
+            CACHE[champ_game_tuple] = datetime.datetime.now()
+            user = BOT.get_user(user_id)
             # if user is not None: THIS LINE MIGHT NOT BE NEEDED
             await user.send(embed=self.get_embed_for_player(player_champ_tourney_info))
+        # return CACHE[champ_game_tuple]
 
     # Clear cache every h hours
     async def clear_cache(self, h):
@@ -174,9 +177,10 @@ class Constants:
         hours = datetime.time(h, 0)
         present = datetime.datetime.now()
         if CACHE:
-            for key, value in CACHE:
+            for key in CACHE.keys():
+                value = CACHE[key]
                 delta = (present - value).total_seconds()
-                if delta > hours * 3600:
+                if delta > h * 3600:
                     CACHE.pop(key)
 
     # Renata -> Renata Glasc
