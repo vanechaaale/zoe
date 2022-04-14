@@ -3,7 +3,7 @@ import re
 import discord
 from discord.ext import commands
 import Data
-from Data import Quotes, gifs, cache
+from Data import Quotes, gifs
 from riotwatcher import LolWatcher
 from lolesports_api import Lolesports_API
 from fuzzywuzzy import fuzz
@@ -16,6 +16,10 @@ import time
 import constants
 import datetime
 
+# DATABASE TO USE
+# db = TinyDB('Data/database.json')
+db = TinyDB('Data/test_database.json')
+
 # read API key
 with open('Data/api_key') as f:
     API_KEY = f.readline()
@@ -24,9 +28,6 @@ API = Lolesports_API()
 WATCHER = LolWatcher(API_KEY)
 my_region = 'na1'
 FREE_CHAMPION_IDS = WATCHER.champion.rotations(my_region)
-
-db = TinyDB('Data/database.json')
-# db = TinyDB('Data/test_database.json')
 
 # check league's latest version
 latest = WATCHER.data_dragon.versions_for_region(my_region)['n']['champion']
@@ -107,8 +108,9 @@ class Constants:
 
     # Given a champion name, searches all live pro games and returns a list of tuples containing information about
     # the player, their champ name, role, and tourney
-    def find_pro_play_champion(self, champion_name):
+    def find_pro_play_matchup(self, champion_name):
         matches_found = []
+        game_info = dict()
         live_matches = self.get_all_live_matches()
         for live_match in live_matches:
             try:
@@ -121,31 +123,49 @@ class Constants:
                     live_game_data = self.get_live_game_data(live_match)
                     blue_team = live_game_data['gameMetadata']['blueTeamMetadata']['participantMetadata']
                     red_team = live_game_data['gameMetadata']['redTeamMetadata']['participantMetadata']
-                    red = self.is_champion_on_team(blue_team, tournament_name, block_name, champion_name)
-                    blue = self.is_champion_on_team(red_team, tournament_name, block_name, champion_name)
-                    player_champ_tourney_info = red if red is not None else blue
+                    red = self.is_champion_on_team(blue_team, champion_name)
+                    blue = self.is_champion_on_team(red_team, champion_name)
+                    if red is not None:
+                        player_champ_info = red
+                        role = player_champ_info[2]
+                        enemy_player_info = self.get_player_info(role, blue_team)
+                    else:
+                        player_champ_info = blue
+                        role = player_champ_info[2]
+                        enemy_player_info = self.get_player_info(role, red_team)
                     icon = self.get_icon(team_icons, red, blue)
-                    if player_champ_tourney_info:
-                        player_champ_tourney_info.append(url_slug)
-                        player_champ_tourney_info.append(icon)
-                        player_champ_tourney_info.append(game_id)
-                        # Added URL, Icon, and Game ID to the player, champ, tourney info tuple
-                        matches_found.append(player_champ_tourney_info)
+                    if player_champ_info:
+                        tournament_info = [tournament_name, block_name, url_slug, icon, game_id]
+                        # putting all info together
+                        # player = [player_name, champion_name, role, tournament_name, block_name, url_slug, icon,
+                        #           game_id]
+                        # enemy = [enemy_name, champion_name, role]
+                        player_champ_info.append(tournament_info)
+                        game_info['player'] = player_champ_info
+                        game_info['enemy'] = enemy_player_info
+                        matches_found.append(game_info)
             except (Exception,):
                 pass
         return matches_found
 
     # Given the red or blue side, tourney name, block name, and champ name, returns the player_champ_tourney_info
     # if the given champ is on the team
-    def is_champion_on_team(self, team, tournament_name, block_name, champion_name):
+    def is_champion_on_team(self, team, champion_name):
         for player in team:
             # player['championId'] wont include spaces which breaks format_champion_name(), hence why it is not used
             champion = self.check_for_special_name_match(re.sub(r"([A-Z])", r" \1", player['championId'])[1:])
+            role = player['role'].capitalize()
             if champion.lower() == champion_name.lower():
-                player_name = player['summonerName']
-                role = player['role'].capitalize()
-                return [player_name, f"{champion_name} {role}", f"{tournament_name} {block_name}"]
+                return self.get_player_info(role, team)
         return None
+
+    # Given a team and a role, returns the player in that role
+    def get_player_info(self, role, team):
+        for player in team:
+            player_name = player['summonerName']
+            r = player['role'].capitalize()
+            if r == role:
+                return [player_name, {champion_name}, {role}]
 
     # Every minute, checks all live champions and their db of subscribed users to message the users about a game
     # where the champion is being played, then updates the cache if the user has not already been messaged
@@ -156,27 +176,23 @@ class Constants:
             champ_name_user_ids_dict = db.get(champion['champion_name'] == champ)
             if champ_name_user_ids_dict is not None:
                 for user_id in champ_name_user_ids_dict['user_ids']:
-                    matches_found = self.find_pro_play_champion(champ)
+                    matches_found = self.find_pro_play_matchup(champ)
                     if matches_found:
-                        for player_champ_tourney_info in matches_found:
-                            await self.update_cache(user_id, player_champ_tourney_info)
+                        for game_info in matches_found:
+                            await self.update_cache(user_id, game_info)
 
     # update cache with new game ids upon seeing them for the first time, else it does nothing and won't msg users
-    async def update_cache(self, user_id, player_champ_tourney_info):
-        game_id = player_champ_tourney_info[5]
-        champion_info = player_champ_tourney_info[1]
-        champ_game_tuple = champion_info, game_id
+    async def update_cache(self, user_id, game_info):
+        game_id = game_info['player'][6]
+        champion = game_info['player'][1]
+        champ_game_tuple = champion, game_id
         if champ_game_tuple not in CACHE:
             CACHE[champ_game_tuple] = datetime.datetime.now()
             user = BOT.get_user(user_id)
-            # if user is not None: THIS LINE MIGHT NOT BE NEEDED
-            await user.send(embed=self.get_embed_for_player(player_champ_tourney_info))
-        # return CACHE[champ_game_tuple]
+            await user.send(embed=self.get_embed_for_player(game_info))
 
     # Clear cache every h hours
     async def clear_cache(self, h):
-        # 2 hours in between cache clears
-        hours = datetime.time(h, 0)
         present = datetime.datetime.now()
         if CACHE:
             for key in CACHE.keys():
@@ -234,16 +250,21 @@ class Constants:
                 return int(game['id'])
 
     # Given player_champ_tourney_etc info, returns an embed with all relevant information attached
-    def get_embed_for_player(self, player_champ_tourney_info):
+    def get_embed_for_player(self, game_info):
         embed = discord.Embed(color=0x87cefa)
-        player_name = player_champ_tourney_info[0]
-        champion_role = player_champ_tourney_info[1]
-        tournament_name = player_champ_tourney_info[2]
-        url = LOL_ESPORTS_LIVE_LINK + player_champ_tourney_info[3]
-        icon = player_champ_tourney_info[4]
+        player_info = game_info['player']
+        player_name = player_info[0]
+        player_champ_name_and_role = player_info[1] + player_info[2]
+        tournament_name = player_info[3]
+        url = LOL_ESPORTS_LIVE_LINK + player_info[4]
+        icon = player_info[5]
+        enemy_info = game_info['enemy']
+        enemy_player_name = enemy_info[0]
+        enemy_champ_name_and_role = f'{enemy_info[1]}  {enemy_info[2]}'
         embed.add_field(
             name=f"{player_name}",
-            value=f"Playing {champion_role} in {tournament_name}",
+            value=f"Playing {player_champ_name_and_role} against {enemy_player_name}'s {enemy_champ_name_and_role} in "
+                  f"{tournament_name}",
             inline=False)
         embed.add_field(name="Watch live on LolEsports:", value=f"{url}", inline=False)
         embed.set_thumbnail(url=icon)

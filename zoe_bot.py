@@ -2,6 +2,7 @@ import random
 import re
 import discord
 from discord.ext import commands
+from discord.ext.commands import Context
 import Data
 from Data import Quotes, gifs
 from riotwatcher import LolWatcher
@@ -142,14 +143,14 @@ async def rotation(c):
 
 @bot.command(brief="Show list of live games with a champion in professional play",
              description="Given a champion's name, shows a list of all live professional games where the champion "
-                         "is being played, or use '~pro all' to see a list of all champions in live games")
-async def pro(channel, *champion_name):
+                         "is being played, or use '~live all' to see a list of all champions in live games")
+async def live(channel, *champion_name):
     if not isinstance(channel, discord.User) and channel is not None:
         channel = channel.channel
     try:
         original_message = ' '.join(champion_name)
         if not champion_name:
-            await channel.send("use '~pro <champion>' to search for a champion currently in pro play!")
+            await channel.send("use '~live <champion>' to search for a champion currently in pro play!")
             return
         if original_message.lower() == "all":
             await const.pro_all(channel)
@@ -158,10 +159,10 @@ async def pro(channel, *champion_name):
         if champion_name == '':
             await channel.send(f"No champion with name '{original_message}' was found.")
             return
-        matches_found = const.find_pro_play_champion(champion_name)
+        matches_found = const.find_pro_play_matchup(champion_name)
         if matches_found:
-            for match in matches_found:
-                await channel.send(embed=const.get_embed_for_player(match))
+            for game_info in matches_found:
+                await channel.send(embed=const.get_embed_for_player(game_info))
         else:
             await channel.send(f"{champion_name} isn't on Summoner's Rift right now :(")
     except (Exception,):
@@ -185,13 +186,12 @@ async def sale(c):
 @bot.command(brief="Track a champion in professional play",
              description="Get notified by Zoe Bot whenever a certain champion is being played in a professional "
                          "match, or use the command again to stop receiving notifications from Zoe Bot.")
-async def track(message, *champion_name):
-    # person calls 'track <champion_name>'
+async def follow(message, *champion_name):
     # format champion_name
     champion_name = const.format_champion_name(' '.join(champion_name))
     if not champion_name:
         await message.channel.send(
-            "use '~track <champion>' to be notified when a champion is being played in a professional match!")
+            f"use '~follow <champion>' to be notified when a champion is being played in a professional match!")
         return
     # Query champion user id list
     champion = Query()
@@ -202,22 +202,22 @@ async def track(message, *champion_name):
     if champ_name_user_ids_dict is None:
         user_ids_list.append(user_id)
         db.insert({'champion_name': champion_name, 'user_ids': user_ids_list})
-        await message.channel.send(f"Now tracking live pro games for {champion_name}.")
+        await message.channel.send(f"Now tracking live professional games for {champion_name}.")
     elif user_id not in user_ids_list:
         user_ids_list.append(user_id)
         db.update({'user_ids': user_ids_list}, champion['champion_name'] == champion_name)
-        await message.channel.send(f"Now tracking live pro games for {champion_name}.")
+        await message.channel.send(f"Now tracking live professional games for {champion_name}.")
     else:
         user_ids_list.remove(user_id)
         db.update({'user_ids': user_ids_list}, champion['champion_name'] == champion_name)
-        await message.channel.send(f"No longer tracking live pro games for {champion_name}.")
+        await message.channel.send(f"No longer tracking live professional games for {champion_name}.")
 
 
 @bot.command(brief="Show list of all champions being tracked for professional play",
              description="Show a list of all champions that Zoe Bot will notify a Discord User for when one or "
                          "more champs are being played in a professional game. Remove a champion from this list "
                          "with the command '~track <champion_name>'.")
-async def subscribed(message):
+async def following(message):
     tracked_list = []
     user_id = message.author.id
     for champ_name in CHAMP_DICT.values():
