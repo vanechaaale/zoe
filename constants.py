@@ -1,20 +1,20 @@
-import random
-import re
-import discord
-from discord.ext import commands
-import Data
-from Data import Quotes, gifs
-from riotwatcher import LolWatcher
-from lolesports_api import Lolesports_API
-from fuzzywuzzy import fuzz
 import BaseMessageResponse
-import threading
-from threading import Thread
-from tinydb import TinyDB, Query, where
+import Data
 import asyncio
-import time
 import constants
 import datetime
+import discord
+import random
+import re
+import threading
+import time
+from Data import Quotes, gifs
+from discord.ext import commands
+from fuzzywuzzy import fuzz
+from lolesports_api import Lolesports_API
+from riotwatcher import LolWatcher
+from threading import Thread
+from tinydb import TinyDB, Query, where
 
 # USING TESTING DATABASE
 db = TinyDB('Data/test_database.json')
@@ -194,7 +194,7 @@ class Constants:
     async def clear_cache(self, h):
         present = datetime.datetime.now()
         if CACHE:
-            for key in CACHE.keys():
+            for key in list(CACHE.keys()):
                 value = CACHE[key]
                 delta = (present - value).total_seconds()
                 if delta > h * 3600:
