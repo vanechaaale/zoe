@@ -37,6 +37,7 @@ SPECIAL_CHAMPION_NAME_MATCHES_DICT = {
     "Renata": "Renata Glasc",
     "Glasc": "Renata Glasc",
     "Jarvan": "Jarvan IV",
+    "JarvanIV": "Jarvan IV",
     "Aurelion": "Aurelion Sol",
     "Lee": "Lee Sin",
     "Yi": "Master Yi",
@@ -96,11 +97,8 @@ class Constants:
         for player in team:
             # self.format_champion_name() doesn't work with spaces so player['championId'] breaks it
             champion_name = player['championId']
-            if champion_name == "JarvanIV":
-                current_champ = "Jarvan IV"
             # reformats the string to put spaces between capital letters :D
-            else:
-                current_champ = self.check_for_special_name_match(re.sub(r"([A-Z])", r" \1", champion_name)[1:])
+            current_champ = self.check_for_special_name_match(re.sub(r"([A-Z])", r" \1", champion_name)[1:])
             if current_champ not in live_champs:
                 live_champs.add(current_champ)
         return live_champs
@@ -118,7 +116,6 @@ class Constants:
                     block_name = live_match['blockName']
                     url_slug = live_match['league']['slug']
                     game_id = self.get_live_match_id(live_match['match']['games'])
-                    # [blue_icon, red_icon]
                     team_icons = self.get_team_icons(live_match)
                     live_game_data = self.get_live_game_data(live_match)
                     blue_team = live_game_data['gameMetadata']['blueTeamMetadata']['participantMetadata']
