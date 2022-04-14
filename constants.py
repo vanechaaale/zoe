@@ -16,6 +16,10 @@ import time
 import constants
 import datetime
 
+# DATABASE TO USE
+# db = TinyDB('Data/database.json')
+db = TinyDB('Data/test_database.json')
+
 # read API key
 with open('Data/api_key') as f:
     API_KEY = f.readline()
