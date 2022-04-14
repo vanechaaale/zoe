@@ -3,7 +3,7 @@ import re
 import discord
 from discord.ext import commands
 import Data
-from Data import Quotes, gifs, cache
+from Data import Quotes, gifs
 from riotwatcher import LolWatcher
 from lolesports_api import Lolesports_API
 from fuzzywuzzy import fuzz
