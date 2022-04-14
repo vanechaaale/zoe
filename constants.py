@@ -16,8 +16,7 @@ import time
 import constants
 import datetime
 
-# DATABASE TO USE
-# db = TinyDB('Data/database.json')
+# USING TESTING DATABASE
 db = TinyDB('Data/test_database.json')
 
 # read API key
