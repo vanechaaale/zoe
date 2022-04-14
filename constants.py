@@ -176,10 +176,9 @@ class Constants:
     # Clear cache every h hours
     async def clear_cache(self, h):
         # 2 hours in between cache clears
-        hours = datetime.time(h, 0)
         present = datetime.datetime.now()
         if CACHE:
-            for key in CACHE.keys():
+            for key in list(CACHE.keys()):
                 value = CACHE[key]
                 delta = (present - value).total_seconds()
                 if delta > h * 3600:
