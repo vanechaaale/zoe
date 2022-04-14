@@ -234,6 +234,6 @@ async def following(message):
 
 
 # Start up the bot
-with open('Data/token') as f:
+with open('Data/alpha_token') as f:
     token = f.readline()
 bot.run(token)
