@@ -118,28 +118,30 @@ class Constants:
                     block_name = live_match['blockName']
                     url_slug = live_match['league']['slug']
                     game_id = self.get_live_match_id(live_match['match']['games'])
+                    # [blue_icon, red_icon]
                     team_icons = self.get_team_icons(live_match)
                     live_game_data = self.get_live_game_data(live_match)
                     blue_team = live_game_data['gameMetadata']['blueTeamMetadata']['participantMetadata']
                     red_team = live_game_data['gameMetadata']['redTeamMetadata']['participantMetadata']
-                    red = self.is_champion_on_team(blue_team, champion_name)
-                    blue = self.is_champion_on_team(red_team, champion_name)
+                    red = self.is_champion_on_team(red_team, champion_name)
+                    blue = self.is_champion_on_team(blue_team, champion_name)
                     if red is not None:
                         player_champ_info = red
                         role = player_champ_info[2]
                         enemy_player_info = self.get_player_info(role, blue_team)
+                        icon = self.get_icon(player_champ_info, team_icons)
                     else:
                         player_champ_info = blue
                         role = player_champ_info[2]
                         enemy_player_info = self.get_player_info(role, red_team)
-                    icon = self.get_icon(team_icons, red, blue)
+                        icon = self.get_icon(player_champ_info, team_icons)
                     if player_champ_info:
-                        tournament_info = [tournament_name, block_name, url_slug, icon, game_id]
+                        tournament_info = [tournament_name, url_slug, icon, block_name, game_id]
                         # putting all info together
-                        # player = [player_name, champion_name, role, tournament_name, block_name, url_slug, icon,
-                        #           game_id]
+                        # player = [0 : player_name, 1: champion_name, 2: role, 3: tournament_name, 4: url_slug,
+                        # 5: icon, 6: block_name, 7: game_id]
                         # enemy = [enemy_name, champion_name, role]
-                        player_champ_info.append(tournament_info)
+                        player_champ_info = player_champ_info + tournament_info
                         game_info['player'] = player_champ_info
                         game_info['enemy'] = enemy_player_info
                         matches_found.append(game_info)
@@ -161,10 +163,11 @@ class Constants:
     # Given a team and a role, returns the player in that role
     def get_player_info(self, role, team):
         for player in team:
-            player_name = player['summonerName']
             r = player['role'].capitalize()
             if r == role:
-                return [player_name, {champion_name}, {role}]
+                player_name = player['summonerName']
+                champion_name = self.check_for_special_name_match(re.sub(r"([A-Z])", r" \1", player['championId'])[1:])
+                return [player_name, champion_name, role]
 
     # Every minute, checks all live champions and their db of subscribed users to message the users about a game
     # where the champion is being played, then updates the cache if the user has not already been messaged
@@ -182,7 +185,7 @@ class Constants:
 
     # update cache with new game ids upon seeing them for the first time, else it does nothing and won't msg users
     async def update_cache(self, user_id, game_info):
-        game_id = game_info['player'][6]
+        game_id = game_info['player'][7]
         champion = game_info['player'][1]
         champ_game_tuple = champion, game_id
         if champ_game_tuple not in CACHE:
@@ -220,17 +223,18 @@ class Constants:
 
     def get_team_icons(self, live_match):
         teams = live_match['match']['teams']
-        red_team_image = teams[0]['image']
-        blue_team_image = teams[1]['image']
-        return red_team_image, blue_team_image
+        icons_dict = dict()
+        team1_code = teams[0]['code']
+        icons_dict[team1_code] = teams[0]['image']
+        team2_code = teams[1]['code']
+        icons_dict[team2_code] = teams[1]['image']
+        return icons_dict
 
-    def get_icon(self, team_icons, red, blue):
-        if red is not None:
-            return team_icons[1]
-        elif blue is not None:
-            return team_icons[0]
-        else:
-            return None
+    def get_icon(self, player_champ_info, icons_dict):
+        player_name = player_champ_info[0]
+        data = player_name.split(' ')
+        team_code = data[0]
+        return icons_dict[team_code]
 
     # Gather game data for a live game in a match
     def get_live_game_data(self, live_match):
@@ -253,7 +257,7 @@ class Constants:
         embed = discord.Embed(color=0x87cefa)
         player_info = game_info['player']
         player_name = player_info[0]
-        player_champ_name_and_role = player_info[1] + player_info[2]
+        player_champ_name_and_role = f'{player_info[1]} {player_info[2]}'
         tournament_name = player_info[3]
         url = LOL_ESPORTS_LIVE_LINK + player_info[4]
         icon = player_info[5]
@@ -262,7 +266,7 @@ class Constants:
         enemy_champ_name_and_role = f'{enemy_info[1]}  {enemy_info[2]}'
         embed.add_field(
             name=f"{player_name}",
-            value=f"Playing {player_champ_name_and_role} against {enemy_player_name}'s {enemy_champ_name_and_role} in "
+            value=f"Playing {player_champ_name_and_role} vs. {enemy_player_name}'s {enemy_champ_name_and_role} in "
                   f"{tournament_name}",
             inline=False)
         embed.add_field(name="Watch live on LolEsports:", value=f"{url}", inline=False)

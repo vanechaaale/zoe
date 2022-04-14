@@ -141,7 +141,7 @@ async def rotation(c):
         await c.channel.send(const.get_zoe_error_message())
 
 
-@bot.command(brief="Show list of live games with a champion in professional play",
+@bot.command(brief="Show live games with a champion in professional play",
              description="Given a champion's name, shows a list of all live professional games where the champion "
                          "is being played, or use '~live all' to see a list of all champions in live games")
 async def live(channel, *champion_name):
@@ -150,7 +150,7 @@ async def live(channel, *champion_name):
     try:
         original_message = ' '.join(champion_name)
         if not champion_name:
-            await channel.send("use '~live <champion>' to search for a champion currently in pro play!")
+            await channel.send("use '~live <champion>' to search for a champion in a live professional game!")
             return
         if original_message.lower() == "all":
             await const.pro_all(channel)
@@ -183,7 +183,7 @@ async def sale(c):
         await c.channel.send(random.choice(Quotes.Zoe_error_message))"""
 
 
-@bot.command(brief="Track a champion in professional play",
+@bot.command(brief="Track a champion's presence in live professional games",
              description="Get notified by Zoe Bot whenever a certain champion is being played in a professional "
                          "match, or use the command again to stop receiving notifications from Zoe Bot.")
 async def follow(message, *champion_name):
@@ -206,14 +206,14 @@ async def follow(message, *champion_name):
     elif user_id not in user_ids_list:
         user_ids_list.append(user_id)
         db.update({'user_ids': user_ids_list}, champion['champion_name'] == champion_name)
-        await message.channel.send(f"Now tracking live professional games for {champion_name}.")
+        await message.channel.send(f"Now following live professional games for {champion_name}.")
     else:
         user_ids_list.remove(user_id)
         db.update({'user_ids': user_ids_list}, champion['champion_name'] == champion_name)
-        await message.channel.send(f"No longer tracking live professional games for {champion_name}.")
+        await message.channel.send(f"No longer following live games for {champion_name}.")
 
 
-@bot.command(brief="Show list of all champions being tracked for professional play",
+@bot.command(brief="Show list of all followed champions to receive notifications for when they played in live games",
              description="Show a list of all champions that Zoe Bot will notify a Discord User for when one or "
                          "more champs are being played in a professional game. Remove a champion from this list "
                          "with the command '~track <champion_name>'.")
