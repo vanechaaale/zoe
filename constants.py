@@ -258,13 +258,14 @@ class Constants:
         tournament_name = player_info[3]
         url = LOL_ESPORTS_LIVE_LINK + player_info[4]
         icon = player_info[5]
+        block_name = player_info[6]
         enemy_info = game_info['enemy']
         enemy_player_name = enemy_info[0]
         enemy_champ_name_and_role = f'{enemy_info[1]}  {enemy_info[2]}'
         embed.add_field(
             name=f"{player_name}",
             value=f"Playing {player_champ_name_and_role} vs. {enemy_player_name}'s {enemy_champ_name_and_role} in "
-                  f"{tournament_name}",
+                  f"{tournament_name} {block_name}",
             inline=False)
         embed.add_field(name="Watch live on LolEsports:", value=f"{url}", inline=False)
         embed.set_thumbnail(url=icon)
