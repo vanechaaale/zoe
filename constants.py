@@ -16,8 +16,8 @@ from riotwatcher import LolWatcher
 from threading import Thread
 from tinydb import TinyDB, Query, where
 
-# USING TESTING DATABASE
-db = TinyDB('Data/test_database.json')
+# USING LIVE DATABASE
+db = TinyDB('Data/database.json')
 
 # read API key
 with open('Data/api_key') as f:
