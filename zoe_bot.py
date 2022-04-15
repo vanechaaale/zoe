@@ -183,7 +183,7 @@ async def sale(c):
         await c.channel.send(random.choice(Quotes.Zoe_error_message))"""
 
 
-@bot.command(brief="Track a champion's presence in live professional games",
+@bot.command(brief="Keep track of a champion's presence in live professional games",
              description="Get notified by Zoe Bot whenever a certain champion is being played in a professional "
                          "match, or use the command again to stop receiving notifications from Zoe Bot.")
 async def follow(message, *champion_name):

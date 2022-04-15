@@ -112,6 +112,8 @@ class Constants:
         for live_match in live_matches:
             try:
                 if live_match['type'] != 'show' and live_match['state'] == 'inProgress':
+                    # LCS, LCK, LEC, etc.
+                    league = live_match['streams']['parameter']
                     tournament_name = live_match['league']['name']
                     block_name = live_match['blockName']
                     url_slug = live_match['league']['slug']
