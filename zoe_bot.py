@@ -141,7 +141,7 @@ async def rotation(c):
         await c.channel.send(const.get_zoe_error_message())
 
 
-@bot.command(brief="Show live games with a champion in professional play",
+@bot.command(brief="Show live professional games with a champion",
              description="Given a champion's name, shows a list of all live professional games where the champion "
                          "is being played, or use '~live all' to see a list of all champions in live games")
 async def live(channel, *champion_name):
@@ -183,9 +183,9 @@ async def sale(c):
         await c.channel.send(random.choice(Quotes.Zoe_error_message))"""
 
 
-@bot.command(brief="Keep track of a champion's presence in live professional games",
-             description="Get notified by Zoe Bot whenever a certain champion is being played in a professional "
-                         "match, or use the command again to stop receiving notifications from Zoe Bot.")
+@bot.command(brief="Receive messages for a champion being played in live professional games",
+             description="Receive messages from Zoe Bot whenever the given champion is being played in a professional "
+                         "game, or use the command again to stop receiving notifications from Zoe Bot.")
 async def follow(message, *champion_name):
     # format champion_name
     champion_name = const.format_champion_name(' '.join(champion_name))
@@ -210,10 +210,10 @@ async def follow(message, *champion_name):
     else:
         user_ids_list.remove(user_id)
         db.update({'user_ids': user_ids_list}, champion['champion_name'] == champion_name)
-        await message.channel.send(f"No longer following live games for {champion_name}.")
+        await message.channel.send(f"No longer following live professional games for {champion_name}.")
 
 
-@bot.command(brief="Show list of all followed champions to receive notifications for when they played in live games",
+@bot.command(brief="Show all followed champions",
              description="Show a list of all champions that Zoe Bot will notify a Discord User for when one or "
                          "more champs are being played in a professional game. Remove a champion from this list "
                          "with the command '~track <champion_name>'.")
