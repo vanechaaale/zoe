@@ -7,4 +7,4 @@ Data/token
 .idea/
 Data/api_key
 Data/database.json
-
+skin_sales_spider.py
