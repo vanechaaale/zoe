@@ -88,9 +88,9 @@ class Constants:
     async def pro_all(self, channel):
         all_live_champs = self.get_all_live_champs()
         if len(all_live_champs) == 0 or all_live_champs is None:
-            await channel.send("There are currently no live pro games :(")
+            await channel.send("There are currently no champions in live professional games :(")
         else:
-            await channel.send("All champions in live pro games: " + ', '.join(all_live_champs))
+            await channel.send("All champions in live professional games: " + ', '.join(all_live_champs))
 
     def get_champs_on_team(self, team):
         live_champs = set()
@@ -113,7 +113,9 @@ class Constants:
             try:
                 if live_match['type'] != 'show' and live_match['state'] == 'inProgress':
                     # LCS, LCK, LEC, etc.
-                    league = live_match['streams']['parameter']
+                    # live_match['streams'] returns a list of dictionaries with streams info
+                    # streams['parameter'] returns the server (hopefully)
+                    league = live_match['streams']
                     tournament_name = live_match['league']['name']
                     block_name = live_match['blockName']
                     url_slug = live_match['league']['slug']

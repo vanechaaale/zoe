@@ -1,21 +1,23 @@
+import BaseMessageResponse
+import Data
+import asyncio
+import constants
+import discord
+import json
 import random
 import re
-import discord
+import threading
+import time
+from Data import Quotes, gifs
+from constants import Constants
 from discord.ext import commands
 from discord.ext.commands import Context
-import Data
-from Data import Quotes, gifs
-from riotwatcher import LolWatcher
-from lolesports_api import Lolesports_API
 from fuzzywuzzy import fuzz
-import BaseMessageResponse
-import threading
+from lolesports_api import Lolesports_API
+from riotwatcher import LolWatcher
+from skin_sales_spider import SkinSalesSpider, CustomCrawler
 from threading import Thread
 from tinydb import TinyDB, Query, where
-import asyncio
-import time
-import constants
-from constants import Constants
 
 # CONSTANTS
 const = Constants()
@@ -141,7 +143,7 @@ async def rotation(c):
         await c.channel.send(const.get_zoe_error_message())
 
 
-@bot.command(brief="Show live games with a champion in professional play",
+@bot.command(brief="Show live professional games with a champion",
              description="Given a champion's name, shows a list of all live professional games where the champion "
                          "is being played, or use '~live all' to see a list of all champions in live games")
 async def live(channel, *champion_name):
@@ -175,17 +177,25 @@ async def matchup_error(ctx, error):
         await ctx.send("use '~matchup <champion>' to search for Zoe's matchup statistics against a champion!")
 
 
-""" @bot.command(brief="champs and skins on sale", description="champs and skins on sale")
+@bot.command(brief="Show champion skins on sale", description="Show list of all champion skins on sale, which "
+                                                              "refreshes every Monday at 3 PM EST")
 async def sale(c):
+    sale_skins_name_rp_costs = []
     try:
-        
-    except:
-        await c.channel.send(random.choice(Quotes.Zoe_error_message))"""
+        with open("Data/skin_sales_data.json", 'r') as file:
+            dictionary = json.load(file)
+        # iterate through dictionary
+        for entry in dictionary:
+            sale_skins_name_rp_costs.append(entry['skin_name_rp_cost'])
+        skins_sale = '\n'.join(sale_skins_name_rp_costs)
+        await c.channel.send("List of champion skins on sale this week: \n" + skins_sale)
+    except (Exception,):
+        await c.channel.send(random.choice(Quotes.Zoe_error_message))
 
 
-@bot.command(brief="Keep track of a champion's presence in live professional games",
-             description="Get notified by Zoe Bot whenever a certain champion is being played in a professional "
-                         "match, or use the command again to stop receiving notifications from Zoe Bot.")
+@bot.command(brief="Track a champion in professional play",
+             description="Receive messages from Zoe Bot whenever the given champion is being played in a professional "
+                         "game, or use the command again to stop receiving notifications from Zoe Bot.")
 async def follow(message, *champion_name):
     # format champion_name
     champion_name = const.format_champion_name(' '.join(champion_name))
@@ -210,10 +220,10 @@ async def follow(message, *champion_name):
     else:
         user_ids_list.remove(user_id)
         db.update({'user_ids': user_ids_list}, champion['champion_name'] == champion_name)
-        await message.channel.send(f"No longer following live games for {champion_name}.")
+        await message.channel.send(f"No longer following live professional games for {champion_name}.")
 
 
-@bot.command(brief="Show list of all followed champions to receive notifications for when they played in live games",
+@bot.command(brief="Show all followed champions",
              description="Show a list of all champions that Zoe Bot will notify a Discord User for when one or "
                          "more champs are being played in a professional game. Remove a champion from this list "
                          "with the command '~track <champion_name>'.")
