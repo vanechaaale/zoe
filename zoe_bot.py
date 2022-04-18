@@ -1,21 +1,23 @@
+import BaseMessageResponse
+import Data
+import asyncio
+import constants
+import discord
+import json
 import random
 import re
-import discord
+import threading
+import time
+from Data import Quotes, gifs
+from constants import Constants
 from discord.ext import commands
 from discord.ext.commands import Context
-import Data
-from Data import Quotes, gifs
-from riotwatcher import LolWatcher
-from lolesports_api import Lolesports_API
 from fuzzywuzzy import fuzz
-import BaseMessageResponse
-import threading
+from lolesports_api import Lolesports_API
+from riotwatcher import LolWatcher
+from skin_sales_spider import SkinSalesSpider, CustomCrawler
 from threading import Thread
 from tinydb import TinyDB, Query, where
-import asyncio
-import time
-import constants
-from constants import Constants
 
 # CONSTANTS
 const = Constants()
@@ -175,15 +177,23 @@ async def matchup_error(ctx, error):
         await ctx.send("use '~matchup <champion>' to search for Zoe's matchup statistics against a champion!")
 
 
-""" @bot.command(brief="champs and skins on sale", description="champs and skins on sale")
+@bot.command(brief="Show champion skins on sale", description="Show list of all champion skins on sale, which "
+                                                              "refreshes every Monday at 3 PM EST")
 async def sale(c):
+    sale_skins_name_rp_costs = []
     try:
-        
-    except:
-        await c.channel.send(random.choice(Quotes.Zoe_error_message))"""
+        with open("Data/skin_sales_data.json", 'r') as file:
+            dictionary = json.load(file)
+        # iterate through dictionary
+        for entry in dictionary:
+            sale_skins_name_rp_costs.append(entry['skin_name_rp_cost'])
+        skins_sale = '\n'.join(sale_skins_name_rp_costs)
+        await c.channel.send("List of champion skins on sale this week: \n" + skins_sale)
+    except (Exception,):
+        await c.channel.send(random.choice(Quotes.Zoe_error_message))
 
 
-@bot.command(brief="Receive messages for a champion being played in live professional games",
+@bot.command(brief="Track a champion in professional play",
              description="Receive messages from Zoe Bot whenever the given champion is being played in a professional "
                          "game, or use the command again to stop receiving notifications from Zoe Bot.")
 async def follow(message, *champion_name):
