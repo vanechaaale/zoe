@@ -1,46 +1,59 @@
 import scrapy
 from scrapy.crawler import CrawlerProcess
+import json
 
 
+# Python script to scrape earlygame.com for skin sales
 class SkinSalesSpider(scrapy.Spider):
-    name = "quotes"
+    name = "skin sales"
     start_urls = [
-        'https://www.riftfeed.gg/lol-skins/lol-skins-sale/',
+        'https://earlygame.com/lol/lol-skins-sale/',
     ]
+    data = []
 
-    # parse data from 'https://www.riftfeed.gg/lol-skins/lol-skins-sale/' to get all skins on sale and their
-    # current RP cost
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.output_callback = kwargs.get('args').get('callback')
+
+    # parse data from earlygame.com to get all skins on sale and their current RP cost
     def parse(self, response):
-        # skin images go from 4-18 to account for other images on the page
-        for index in range(4, 18):
-            # skin name and rp cost starts at index 1, whereas skin image starts at index 4, hence the index - 3 offset
-            skin_name_rp_cost = self.get_skin_name_rp_cost_by_index(response, index - 3)
-            yield {
-                'skin_image': self.get_image_by_index(response, index),
-                'skin_name': skin_name_rp_cost[0],
-                'rp_cost': skin_name_rp_cost[1]
-            }
+        skin_name_rp_costs = response.xpath(
+            '//div/div/div[3]/div[1]/div[1]/div[1]/figure/figcaption/h2/text()').getall()
+        images = response.xpath('//div/div/div[3]/div[1]/div[1]/div[1]/figure/picture/img').getall()
+        for index, value in enumerate(skin_name_rp_costs):
+            self.data.append({
+                'skin_image': images[index],
+                'skin_name_rp_cost': value
+            })
+        json_data = json.dumps(self.data)
+        with open('Data/skin_sales_data.json', 'w') as outfile:
+            outfile.write(json_data)
 
-    # # get skin name and rp cost by index of riftfeed webpage
-    # '<b>15. Frostfire Annie (390 RP):</b>' -> ("Frostfire Annie", "390 RP"
-    def get_skin_name_rp_cost_by_index(self, response, index):
-        text = response.xpath(f'//div/div/section[2]/div/div[1]/div[1]/div[1]/div[{index}]/div[2]/div/p/b').get()
-        skin_data = text.split(' ')
-        rp_cost_index = len(skin_data) - 1
-        rp_cost = f"{str(skin_data[rp_cost_index].replace('(', ''))} RP"
-        skin_name_data = skin_data[1:rp_cost_index - 1]
-        skin_name = ' '.join(skin_name_data)
-        return skin_name, rp_cost
+    def close(self):
+        self.output_callback(self.data)
 
-    # given all images on the webpage, return the image by index
-    def get_image_by_index(self, response, index):
-        images = response.css('img')
-        return images[index].xpath('@src').get()
+    def run_spider(self):
+        process = CrawlerProcess(
+            # {'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)'},
+            settings={"FEEDS": {"Data/items.json": {"format": "json"}, }},
+        )
+        process.crawl(SkinSalesSpider)
+        process.start()
 
 
-# process = CrawlerProcess({
-#     'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)'
-# })
-#
-# process.crawl(SkinSalesSpider)
-# process.start()
+class CustomCrawler:
+
+    def __init__(self):
+        self.output = None
+        self.process = CrawlerProcess(settings={'LOG_ENABLED': False})
+
+    def yield_output(self, data):
+        self.output = data
+
+    def crawl(self, cls):
+        self.process.crawl(cls, args={'callback': self.yield_output})
+        self.process.start()
+
+
+crawler = CustomCrawler()
+crawler.crawl(SkinSalesSpider)
