@@ -177,7 +177,7 @@ async def matchup_error(ctx, error):
         await ctx.send("use '~matchup <champion>' to search for Zoe's matchup statistics against a champion!")
 
 
-@bot.command(brief="Show champion skins on sale", description="Show list of all champion skins on sale, which "
+@bot.command(brief="Show champion skins on sale (WIP)", description="Show list of all champion skins on sale, which "
                                                               "refreshes every Monday at 3 PM EST")
 async def sale(c):
     sale_skins_name_rp_costs = []
