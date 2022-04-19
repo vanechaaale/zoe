@@ -1,6 +1,7 @@
 import scrapy
 from scrapy.crawler import CrawlerProcess
 import json
+import os
 
 
 # Python script to scrape earlygame.com for skin sales
@@ -32,13 +33,13 @@ class SkinSalesSpider(scrapy.Spider):
     def close(self):
         self.output_callback(self.data)
 
-    def run_spider(self):
-        process = CrawlerProcess(
-            # {'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)'},
-            settings={"FEEDS": {"Data/items.json": {"format": "json"}, }},
-        )
-        process.crawl(SkinSalesSpider)
-        process.start()
+    # def run_spider(self):
+    #     process = CrawlerProcess(
+    #         # {'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)'},
+    #         settings={"FEEDS": {"Data/items.json": {"format": "json"}, }},
+    #     )
+    #     process.crawl(SkinSalesSpider)
+    #     process.start()
 
 
 class CustomCrawler:
@@ -55,5 +56,8 @@ class CustomCrawler:
         self.process.start()
 
 
+# clear current json data file and then scrape again
+if os.path.exists("Data/skin_sales_data.json"):
+    os.remove("Data/skin_sales_data.json")
 crawler = CustomCrawler()
 crawler.crawl(SkinSalesSpider)
