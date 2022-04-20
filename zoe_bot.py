@@ -185,12 +185,12 @@ async def matchup_error(ctx, error):
         await ctx.send("use '~matchup <champion>' to search for Zoe's matchup statistics against a champion!")
 
 
-@bot.command(brief="Show champion skins on sale (WIP)", description="Show list of all champion skins on sale, which "
-                                                                    "refreshes every Monday at 3 PM EST")
+@bot.command(brief="Show champion skins on sale this week",
+             description="Show list of all champion skins on sale, which refreshes every Monday at 3 pm EST")
 async def sale(c):
     sale_skins_name_rp_costs = []
     embed = discord.Embed(title="Champion skins sale:",
-                          description="The shop resets every Monday at 3pm EST", color=0x87cefa)
+                          description="\n", color=0x87cefa)
     try:
         with open("Data/skin_sales_data.json", 'r') as file:
             dictionary = json.load(file)

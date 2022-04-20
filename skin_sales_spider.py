@@ -1,3 +1,4 @@
+import constants
 import cv2
 import json
 import numpy as np
@@ -101,6 +102,11 @@ def main():
     #        np.hstack(images[12:15])
     full_image = np.vstack(rows)
     imwrite('Data/full_skin_sales_image.jpg', full_image)
+
+    # message people to notify if a champ they like has a skin on sale
+    constants = Constants()
+    for champion in constants.champ_dict.values():
+        return
 
 
 if __name__ == "__main__":
