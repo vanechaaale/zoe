@@ -1,23 +1,31 @@
 import BaseMessageResponse
 import Data
+import PIL
 import asyncio
 import constants
+import cv2
 import discord
 import json
+import numpy as np
 import random
 import re
+import requests
+import shutil
 import threading
 import time
 from Data import Quotes, gifs
+from PIL import Image
 from constants import Constants
+from discord import Webhook, RequestsWebhookAdapter, File
 from discord.ext import commands
 from discord.ext.commands import Context
 from fuzzywuzzy import fuzz
+from imageio import imread, imwrite
 from lolesports_api import Lolesports_API
 from riotwatcher import LolWatcher
-from skin_sales_spider import SkinSalesSpider, CustomCrawler
 from threading import Thread
 from tinydb import TinyDB, Query, where
+from urllib.request import Request, urlopen
 
 # CONSTANTS
 const = Constants()
@@ -178,17 +186,30 @@ async def matchup_error(ctx, error):
 
 
 @bot.command(brief="Show champion skins on sale (WIP)", description="Show list of all champion skins on sale, which "
-                                                              "refreshes every Monday at 3 PM EST")
+                                                                    "refreshes every Monday at 3 PM EST")
 async def sale(c):
     sale_skins_name_rp_costs = []
+    embed = discord.Embed(title="Champion skins sale:",
+                          description="The shop resets every Monday at 3pm EST", color=0x87cefa)
+    image_file = discord.File('result.jpg', filename='result.jpg')
+    embed.set_image(url='attachment://result.jpg')
     try:
         with open("Data/skin_sales_data.json", 'r') as file:
             dictionary = json.load(file)
         # iterate through dictionary
         for entry in dictionary:
-            sale_skins_name_rp_costs.append(entry['skin_name_rp_cost'])
-        skins_sale = '\n'.join(sale_skins_name_rp_costs)
-        await c.channel.send("List of champion skins on sale this week: \n" + skins_sale)
+            skin_name_rp_cost = " ".join(entry['skin_name_rp_cost'].split())
+            skin_data = skin_name_rp_cost.split(' ')
+            skin_name = skin_data[0: len(skin_data) - 3]
+            skin_rp_cost = skin_data[len(skin_data) - 2: len(skin_data)]
+            embed.add_field(
+                name=f"{' '.join(skin_name)}",
+                value=' '.join(skin_rp_cost),
+                inline=True)
+            sale_skins_name_rp_costs.append(skin_name_rp_cost)
+        # skins_sale = '\n'.join(sale_skins_name_rp_costs)
+        # await c.channel.send("List of champion skins on sale this week: \n" + skins_sale)
+        await c.send(file=image_file, embed=embed)
     except (Exception,):
         await c.channel.send(random.choice(Quotes.Zoe_error_message))
 
@@ -242,8 +263,14 @@ async def following(message):
     else:
         await message.channel.send(f"You are currently not tracking live games for any champion.")
 
-# Random message
+
+async def send_image(c, file_name):
+    with open(file_name, 'rb') as file:
+        picture = discord.File(file)
+        await c.channel.send(file=picture)
+
+
 # Start up the bot
-with open('Data/live_token') as f:
+with open('Data/alpha_token') as f:
     token = f.readline()
 bot.run(token)

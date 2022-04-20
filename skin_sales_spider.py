@@ -1,7 +1,13 @@
-import scrapy
-from scrapy.crawler import CrawlerProcess
+import cv2
 import json
+import numpy as np
 import os
+import requests
+import scrapy
+import shutil
+from imageio import imread, imwrite
+from scrapy.crawler import CrawlerProcess
+from urllib.request import Request, urlopen
 
 
 # Python script to scrape earlygame.com for skin sales
@@ -56,8 +62,46 @@ class CustomCrawler:
         self.process.start()
 
 
-# clear current json data file and then scrape again
-if os.path.exists("Data/skin_sales_data.json"):
-    os.remove("Data/skin_sales_data.json")
-crawler = CustomCrawler()
-crawler.crawl(SkinSalesSpider)
+def main():
+    # clear current json data file and then scrape again
+    if os.path.exists("Data/skin_sales_data.json"):
+        os.remove("Data/skin_sales_data.json")
+    crawler = CustomCrawler()
+    crawler.crawl(SkinSalesSpider)
+
+    # reset images for sales command
+    images = []
+    with open("Data/skin_sales_data.json", 'r') as file:
+        dictionary = json.load(file)
+    # iterate through dictionary
+    for entry in dictionary:
+        image_url = entry['skin_image']
+        image_url_list = image_url.split(' ')
+        image_url = image_url_list[1].replace('src=', '').replace('"', '')
+        r = requests.get(image_url,
+                         stream=True, headers={'User-agent': 'Mozilla/5.0'})
+        if r.status_code == 200:
+            with open("Data/single_skin_image.jpg", 'wb') as file:
+                r.raw.decode_content = True
+                shutil.copyfileobj(r.raw, file)
+                image = imread(file.name)[..., :3]
+                x = int(image.shape[1] * .8)
+                y = int(image.shape[0] * .8)
+                # resizing image
+                image = cv2.resize(image, dsize=(x, y), interpolation=cv2.INTER_CUBIC)
+                # cropping image
+                x_crop_amount = int(x * .12)
+                y_crop_amount = int(y * .05)
+                image = image[y_crop_amount: y - y_crop_amount, x_crop_amount:x - x_crop_amount]
+                images.append(image)
+    # 5 x 3 display
+    rows = np.hstack(images[0:5]), np.hstack(images[5:10]), np.hstack(images[10:15])
+    # 3 x 5 display
+    # rows = np.hstack(images[0:3]), np.hstack(images[3:6]), np.hstack(images[6:9]), np.hstack(images[9:12]), \
+    #        np.hstack(images[12:15])
+    full_image = np.vstack(rows)
+    imwrite('Data/full_skin_sales_image.jpg', full_image)
+
+
+if __name__ == "__main__":
+    main()
