@@ -151,7 +151,7 @@ async def rotation(c):
         await c.channel.send(const.get_zoe_error_message())
 
 
-@bot.command(brief="Show live professional games with a champion",
+@bot.command(brief="Show live professional games of a champion",
              description="Given a champion's name, shows a list of all live professional games where the champion "
                          "is being played, or use '~live all' to see a list of all champions in live games")
 async def live(channel, *champion_name):
