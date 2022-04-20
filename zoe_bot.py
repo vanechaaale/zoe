@@ -191,8 +191,6 @@ async def sale(c):
     sale_skins_name_rp_costs = []
     embed = discord.Embed(title="Champion skins sale:",
                           description="The shop resets every Monday at 3pm EST", color=0x87cefa)
-    image_file = discord.File('result.jpg', filename='result.jpg')
-    embed.set_image(url='attachment://result.jpg')
     try:
         with open("Data/skin_sales_data.json", 'r') as file:
             dictionary = json.load(file)
@@ -209,7 +207,9 @@ async def sale(c):
             sale_skins_name_rp_costs.append(skin_name_rp_cost)
         # skins_sale = '\n'.join(sale_skins_name_rp_costs)
         # await c.channel.send("List of champion skins on sale this week: \n" + skins_sale)
-        await c.send(file=image_file, embed=embed)
+        image_file = discord.File('Data/full_skin_sales_image.jpg', filename='full_skin_sales_image.jpg')
+        embed.set_image(url='attachment://full_skin_sales_image.jpg')
+        await c.send(embed=embed, file=image_file)
     except (Exception,):
         await c.channel.send(random.choice(Quotes.Zoe_error_message))
 
@@ -262,12 +262,6 @@ async def following(message):
         await message.channel.send(f"Currently tracking professional matches for: {', '.join(tracked_list)}")
     else:
         await message.channel.send(f"You are currently not tracking live games for any champion.")
-
-
-async def send_image(c, file_name):
-    with open(file_name, 'rb') as file:
-        picture = discord.File(file)
-        await c.channel.send(file=picture)
 
 
 # Start up the bot
