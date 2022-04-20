@@ -242,7 +242,7 @@ async def following(message):
     else:
         await message.channel.send(f"You are currently not tracking live games for any champion.")
 
-
+# Random message
 # Start up the bot
 with open('Data/live_token') as f:
     token = f.readline()
