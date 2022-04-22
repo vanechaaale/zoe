@@ -33,6 +33,7 @@ bot = constants.BOT
 api = constants.API
 CHAMP_DICT = const.champ_dict
 db = constants.db
+SKIN_DB = constants.SKIN_DB
 free_champion_ids = constants.FREE_CHAMPION_IDS
 
 
@@ -194,7 +195,7 @@ async def sale(c):
     try:
         with open("Data/skin_sales_data.json", 'r') as file:
             dictionary = json.load(file)
-        # iterate through dictionary
+        # iterate through dictionary and get list of skins on sale
         for entry in dictionary:
             skin_name_rp_cost = " ".join(entry['skin_name_rp_cost'].split())
             skin_data = skin_name_rp_cost.split(' ')
@@ -212,6 +213,35 @@ async def sale(c):
         await c.send(embed=embed, file=image_file)
     except (Exception,):
         await c.channel.send(random.choice(Quotes.Zoe_error_message))
+
+
+@bot.command()
+async def test(message, *champion_name):
+    # format champion_name
+    champion_name = const.format_champion_name(' '.join(champion_name))
+    if not champion_name:
+        await message.channel.send(
+            f"use '~test <champion>' to be notified when a champion's skins go on sale!")
+        return
+    # Query champion user id list
+    champion = Query()
+    user_id = message.author.id
+    skin_db = SKIN_DB
+    champ_name_user_ids_dict = skin_db.get(champion['champion_name'] == champion_name)
+    # I tried using a set but it broke whenever i called db.insert()
+    user_ids_list = [] if champ_name_user_ids_dict is None else champ_name_user_ids_dict['user_ids']
+    if champ_name_user_ids_dict is None:
+        user_ids_list.append(user_id)
+        skin_db.insert({'champion_name': champion_name, 'user_ids': user_ids_list})
+        await message.channel.send(f"Now tracking skin sales for {champion_name}.")
+    elif user_id not in user_ids_list:
+        user_ids_list.append(user_id)
+        skin_db.update({'user_ids': user_ids_list}, champion['champion_name'] == champion_name)
+        await message.channel.send(f"Now tracking skin sales for {champion_name}.")
+    else:
+        user_ids_list.remove(user_id)
+        skin_db.update({'user_ids': user_ids_list}, champion['champion_name'] == champion_name)
+        await message.channel.send(f"No longer tracking skin sales for {champion_name}.")
 
 
 @bot.command(brief="Track a champion in professional play",
@@ -264,7 +294,17 @@ async def following(message):
         await message.channel.send(f"You are currently not tracking live games for any champion.")
 
 
-# Start up the bot
-with open('Data/alpha_token') as f:
-    token = f.readline()
-bot.run(token)
+@bot.command
+def test():
+    const.check_tracked_skins()
+
+
+def main():
+    # Start up the bot
+    with open('Data/alpha_token') as f:
+        token = f.readline()
+    bot.run(token)
+
+
+if __name__ == "__main__":
+    main()

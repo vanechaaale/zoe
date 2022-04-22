@@ -4,10 +4,12 @@ import asyncio
 import constants
 import datetime
 import discord
+import json
 import random
 import re
 import threading
 import time
+import urllib.request
 from Data import Quotes, gifs
 from discord.ext import commands
 from fuzzywuzzy import fuzz
@@ -16,8 +18,9 @@ from riotwatcher import LolWatcher
 from threading import Thread
 from tinydb import TinyDB, Query, where
 
-# USING LIVE DATABASE
+# USING ALPHA DATABASES
 db = TinyDB('Data/test_database.json')
+SKIN_DB = TinyDB('Data/test_skin_database.json')
 
 # read API key
 with open('Data/api_key') as f:
@@ -28,7 +31,7 @@ WATCHER = LolWatcher(API_KEY)
 my_region = 'na1'
 FREE_CHAMPION_IDS = WATCHER.champion.rotations(my_region)
 
-# check league's latest version
+# check league's latest patch version
 latest = WATCHER.data_dragon.versions_for_region(my_region)['n']['champion']
 # Lets get some champions static information
 static_champ_list = WATCHER.data_dragon.champions(latest, False, 'en_US')
@@ -83,6 +86,18 @@ class Constants:
             name = row['name']
             CHAMP_DICT[row['key']] = name
         self.champ_dict = CHAMP_DICT
+
+        # Dictionary of 'Champ name' -> [List of champion skins]
+        STATIC_SKINS_DICT = dict()
+        for champion in static_champ_list:
+            with urllib.request.urlopen(
+                    f'https://ddragon.leagueoflegends.com/cdn/{latest}/data/en_US/champion/{champion}.json') as url:
+                curr_champ_skins = []
+                champion_dict = json.loads(url.read().decode())
+                list_of_champ_skins = champion_dict['data'][champion]['skins']
+                for skin in list_of_champ_skins:
+                    curr_champ_skins.append(skin['name'])
+            STATIC_SKINS_DICT[champion] = curr_champ_skins
 
     # Send list of all champions in live pro games
     async def pro_all(self, channel):
@@ -204,6 +219,31 @@ class Constants:
                 if delta > h * 3600:
                     CACHE.pop(key)
 
+    async def check_tracked_skins(self):
+        with open("Data/skin_sales_data.json", 'r') as file:
+            skins_sale_dictionary = json.load(file)
+            # message people to notify if a champ they like has a skin on sale
+            constants = Constants()
+            skin_sales_db = Constants.SKIN_DB
+            static_champ_skins_dict = constants.STATIC_SKINS_DICT
+            # For every champion skin on sale...
+            for entry in skins_sale_dictionary:
+                skin_name_rp_cost = " ".join(entry['skin_name_rp_cost'].split())
+                skin_data = skin_name_rp_cost.split(' ')
+                skin_name = skin_data[0: len(skin_data) - 3]
+                skin_rp_cost = skin_data[len(skin_data) - 2: len(skin_data)]
+                # Search all champions and check if the current skin is in this champion's list of skins
+                for champ_name in constants.STATIC_SKINS_DICT.keys():
+                    if skin_name in static_champ_skins_dict[champ_name]:
+                        champion = Query()
+                        query_results = skin_sales_db.get(champion['champion_name'] == champ_name)
+                        if query_results is not None:
+                            user_ids_list = query_results['user_ids']
+                            for user_id in user_ids_list:
+                                print(f"{user_id}: {skin_name} is on sale")
+                                user = BOT.get_user(user_id)
+                                await user.send(user_id, f"{skin_name} is on sale for {skin_rp_cost}!")
+
     # Renata -> Renata Glasc
     def check_for_special_name_match(self, champion_name):
         for special_name, official_name in SPECIAL_CHAMPION_NAME_MATCHES_DICT.items():
@@ -315,6 +355,7 @@ class Constants:
             return None
         else:
             return champion_name
+
 
     async def sendDm(self, user_id, message):
         user = await client.fetch_user(user_id)

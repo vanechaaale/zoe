@@ -1,14 +1,17 @@
 import constants
 import cv2
+import getopt
 import json
 import numpy as np
 import os
 import requests
 import scrapy
 import shutil
+import sys
 from imageio import imread, imwrite
 from scrapy.crawler import CrawlerProcess
 from urllib.request import Request, urlopen
+from tinydb import TinyDB, Query, where
 
 
 # Python script to scrape earlygame.com for skin sales
@@ -73,9 +76,9 @@ def main():
     # reset images for sales command
     images = []
     with open("Data/skin_sales_data.json", 'r') as file:
-        dictionary = json.load(file)
+        skins_sale_dictionary = json.load(file)
     # iterate through dictionary
-    for entry in dictionary:
+    for entry in skins_sale_dictionary:
         image_url = entry['skin_image']
         image_url_list = image_url.split(' ')
         image_url = image_url_list[1].replace('src=', '').replace('"', '')
@@ -86,13 +89,13 @@ def main():
                 r.raw.decode_content = True
                 shutil.copyfileobj(r.raw, file)
                 image = imread(file.name)[..., :3]
-                x = int(image.shape[1] * .8)
-                y = int(image.shape[0] * .8)
+                x = int(image.shape[1] * 1)
+                y = int(image.shape[0] * 1)
                 # resizing image
                 image = cv2.resize(image, dsize=(x, y), interpolation=cv2.INTER_CUBIC)
                 # cropping image
-                x_crop_amount = int(x * .12)
-                y_crop_amount = int(y * .05)
+                x_crop_amount = int(x * 0)
+                y_crop_amount = int(y * 0)
                 image = image[y_crop_amount: y - y_crop_amount, x_crop_amount:x - x_crop_amount]
                 images.append(image)
     # 5 x 3 display
@@ -102,11 +105,6 @@ def main():
     #        np.hstack(images[12:15])
     full_image = np.vstack(rows)
     imwrite('Data/full_skin_sales_image.jpg', full_image)
-
-    # message people to notify if a champ they like has a skin on sale
-    constants = Constants()
-    for champion in constants.champ_dict.values():
-        return
 
 
 if __name__ == "__main__":
