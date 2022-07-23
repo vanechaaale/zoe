@@ -14,7 +14,7 @@ import requests
 import shutil
 import threading
 import time
-from Commands import GuideCommand, LiveCommand, SaleCommand, FollowProCommand
+from Commands import GuideCommand, LiveCommand, SaleCommand, FollowProCommand, FollowSkinCommand
 from Data import Quotes, gifs
 from PIL import Image
 from constants import *
