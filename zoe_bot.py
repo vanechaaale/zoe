@@ -181,32 +181,73 @@ class BaseCommand(commands.Bot):
         async def following(message):
             await FollowProCommand.following(message, self)
 
-    async def update_cache(self, user_id, game_info):
-        # update cache with new game ids upon seeing them for the first time, else it does nothing and won't msg users
-        game_id = game_info['player'][7]
-        champion = game_info['player'][1]
-        champ_game_tuple = champion, game_id
-        if champ_game_tuple not in self.cache:
-            self.cache[champ_game_tuple] = datetime.datetime.now()
-            user = bot.get_user(user_id)
-            await user.send(embed=get_embed_for_player(game_info))
+        @self.command()
+        async def test(channel):
+            left_arrow = "⬅"
+            right_arrow = "➡"
+            image_urls_file = open("Data/image_urls_list.txt", "r")
+            image_urls_list = []
+            for image_url in image_urls_file:
+                image_urls_list.append(image_url)
+            count = 0
+            embed = discord.Embed(
+                color=0xffb6c1,
+            )
+            embed.add_field(
+                name="Champion Skins Sale",
+                value="your mom",
+                inline=False)
+            embed.set_image(url=image_urls_list[count])
 
-    def get_fuzzy_match(self, champion_name):
-        for champ in self.champ_dict.values():
-            if fuzz.token_sort_ratio(champ, champion_name) >= 80:
-                return champ
-        return ''
+            msg = await channel.send(embed=embed)
+            await msg.add_reaction(left_arrow)
+            await msg.add_reaction(right_arrow)
 
-        # Given a janky version of a champion, format it to be pretty
-        #     str given_name: name input as a string
-        #     Return properly formatted champion name as a string
+            def check(r, u):
+                return u == channel.author and str(r.emoji) in [left_arrow, right_arrow]
 
-    def format_champion_name(self, champion_name):
-        champion_name = self.get_fuzzy_match(check_for_special_name_match(champion_name))
-        if champion_name == '':
-            return None
-        else:
-            return champion_name
+            while True:
+                try:
+                    reaction, user = await bot.wait_for("reaction_add", timeout=60.0, check=check)
+                    if str(reaction.emoji) == left_arrow:
+                        count = count - 1 if count > 0 else 15
+                    if str(reaction.emoji) == right_arrow:
+                        count = count + 1 if count < 15 else 0
+
+                    embed.set_image(url=image_urls_list[count])
+                    await msg.edit(embed=embed)
+                except (Exception,):
+                    pass
+
+
+async def update_cache(self, user_id, game_info):
+    # update cache with new game ids upon seeing them for the first time, else it does nothing and won't msg users
+    game_id = game_info['player'][7]
+    champion = game_info['player'][1]
+    champ_game_tuple = champion, game_id
+    if champ_game_tuple not in self.cache:
+        self.cache[champ_game_tuple] = datetime.datetime.now()
+        user = bot.get_user(user_id)
+        await user.send(embed=get_embed_for_player(game_info))
+
+
+def get_fuzzy_match(self, champion_name):
+    for champ in self.champ_dict.values():
+        if fuzz.token_sort_ratio(champ, champion_name) >= 80:
+            return champ
+    return ''
+
+    # Given a janky version of a champion, format it to be pretty
+    #     str given_name: name input as a string
+    #     Return properly formatted champion name as a string
+
+
+def format_champion_name(self, champion_name):
+    champion_name = self.get_fuzzy_match(check_for_special_name_match(champion_name))
+    if champion_name == '':
+        return None
+    else:
+        return champion_name
 
 
 bot = BaseCommand()

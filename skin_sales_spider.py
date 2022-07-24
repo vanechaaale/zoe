@@ -10,8 +10,8 @@ import shutil
 import sys
 from imageio import imread, imwrite
 from scrapy.crawler import CrawlerProcess
-from urllib.request import Request, urlopen
 from tinydb import TinyDB, Query, where
+from urllib.request import Request, urlopen
 
 
 # Python script to scrape earlygame.com for skin sales
@@ -78,26 +78,30 @@ def main():
     with open("Data/skin_sales_data.json", 'r') as file:
         skins_sale_dictionary = json.load(file)
     # iterate through dictionary
-    for entry in skins_sale_dictionary:
-        image_url = entry['skin_image']
-        image_url_list = image_url.split(' ')
-        image_url = image_url_list[1].replace('src=', '').replace('"', '')
-        r = requests.get(image_url,
-                         stream=True, headers={'User-agent': 'Mozilla/5.0'})
-        if r.status_code == 200:
-            with open("Data/single_skin_image.jpg", 'wb') as file:
-                r.raw.decode_content = True
-                shutil.copyfileobj(r.raw, file)
-                image = imread(file.name)[..., :3]
-                x = int(image.shape[1] * 1)
-                y = int(image.shape[0] * 1)
-                # resizing image
-                image = cv2.resize(image, dsize=(x, y), interpolation=cv2.INTER_CUBIC)
-                # cropping image
-                x_crop_amount = int(x * 0)
-                y_crop_amount = int(y * 0)
-                image = image[y_crop_amount: y - y_crop_amount, x_crop_amount:x - x_crop_amount]
-                images.append(image)
+    count = 0
+    with open("Data/image_urls_list.txt", 'w') as image_urls_file:
+        for entry in skins_sale_dictionary:
+            image_url = entry['skin_image']
+            image_url_list = image_url.split(' ')
+            image_url = image_url_list[1].replace('src=', '').replace('"', '')
+            image_urls_file.write(image_url + '\n')
+            r = requests.get(image_url,
+                             stream=True, headers={'User-agent': 'Mozilla/5.0'})
+            if r.status_code == 200:
+                with open(f"Data/single_skin_image{count}.jpg", 'wb') as file:
+                    r.raw.decode_content = True
+                    shutil.copyfileobj(r.raw, file)
+                    image = imread(file.name)[..., :3]
+                    x = int(image.shape[1] * 1)
+                    y = int(image.shape[0] * 1)
+                    # resizing image
+                    image = cv2.resize(image, dsize=(x, y), interpolation=cv2.INTER_CUBIC)
+                    # cropping image
+                    x_crop_amount = int(x * 0)
+                    y_crop_amount = int(y * 0)
+                    image = image[y_crop_amount: y - y_crop_amount, x_crop_amount:x - x_crop_amount]
+                    images.append(image)
+            count += 1
     # 5 x 3 display
     rows = np.hstack(images[0:5]), np.hstack(images[5:10]), np.hstack(images[10:15])
     # 3 x 5 display
