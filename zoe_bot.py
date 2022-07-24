@@ -160,43 +160,47 @@ class BaseCommand(commands.Bot):
                 # skin_rp_cost = skin_data[len(skin_data) - 2: len(skin_data)]
                 sale_skins_name_rp_costs.append(skin_name_rp_cost)
 
+            # List of image URLs
             image_urls_file = open("Data/image_urls_list.txt", "r")
             image_urls_list = []
             for image_url in image_urls_file:
                 image_urls_list.append(image_url)
 
+            # Init embed
+            count = 0
+            embed = discord.Embed(color=0xffb6c1, title="Weekly Champion Skins Sale")
+            embed.add_field(
+                value="Shop refreshes Mondays at 3 pm EST",
+                name=sale_skins_name_rp_costs[count],
+                inline=False
+            )
+            embed.set_image(url=image_urls_list[count])
+            # Add reactions to embed message
+            msg = await channel.send(embed=embed)
             left_arrow = "⬅"
             right_arrow = "➡"
-            image_urls_file = open("Data/image_urls_list.txt", "r")
-            image_urls_list = []
-            for image_url in image_urls_file:
-                image_urls_list.append(image_url)
-            count = 0
-            embed = discord.Embed(color=0xffb6c1)
-            embed.add_field(name="Champion Skins Sale", value=sale_skins_name_rp_costs[count], inline=False)
-            embed.set_image(url=image_urls_list[count])
-
-            msg = await channel.send(embed=embed)
-            msg_id = msg.id
             await msg.add_reaction(left_arrow)
             await msg.add_reaction(right_arrow)
 
             def check(r, u):
                 return u == channel.author and str(r.emoji) in [left_arrow, right_arrow]
 
+            # Reacting to the message will change the current skin displayed
             while True:
                 try:
+                    # User adds a reaction to the message, which is immediately removed
                     reaction, user = await bot.wait_for("reaction_add", timeout=60.0, check=check)
+                    await msg.remove_reaction(reaction, user)
+                    # Edit the embed message to reflect new skin image and name
                     if str(reaction.emoji) == left_arrow:
                         count = count - 1 if count > 0 else 15
                     if str(reaction.emoji) == right_arrow:
                         count = count + 1 if count < 15 else 0
-                    embed = discord.Embed(
-                        color=0xffb6c1)
-                    embed.add_field(name="Champion Skins Sale", value=sale_skins_name_rp_costs[count], inline=False)
-                    embed.set_image(url=image_urls_list[count])
-                    if msg.id == msg_id:
-                        await msg.edit(embed=embed)
+                    embed_dict = embed.to_dict()
+                    embed_dict['fields'][0]['name'] = sale_skins_name_rp_costs[count]
+                    embed_dict['image']['url'] = image_urls_list[count]
+                    embed = discord.Embed.from_dict(embed_dict)
+                    await msg.edit(embed=embed)
                 except (Exception,):
                     pass
 
