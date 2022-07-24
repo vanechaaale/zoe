@@ -170,11 +170,12 @@ class BaseCommand(commands.Bot):
             count = 0
             embed = discord.Embed(color=0xffb6c1, title="Weekly Champion Skins Sale")
             embed.add_field(
-                value="Shop refreshes Mondays at 3 pm EST",
+                value="Shop refreshes every Monday at 3 pm EST",
                 name=sale_skins_name_rp_costs[count],
                 inline=False
             )
             embed.set_image(url=image_urls_list[count])
+            embed.set_footer(text=f"{count + 1}/{len(image_urls_list)}")
             # Add reactions to embed message
             msg = await channel.send(embed=embed)
             left_arrow = "⬅"
@@ -193,12 +194,13 @@ class BaseCommand(commands.Bot):
                     await msg.remove_reaction(reaction, user)
                     # Edit the embed message to reflect new skin image and name
                     if str(reaction.emoji) == left_arrow:
-                        count = count - 1 if count > 0 else 15
+                        count = count - 1 if count > 0 else 14
                     if str(reaction.emoji) == right_arrow:
-                        count = count + 1 if count < 15 else 0
+                        count = count + 1 if count < 14 else 0
                     embed_dict = embed.to_dict()
                     embed_dict['fields'][0]['name'] = sale_skins_name_rp_costs[count]
                     embed_dict['image']['url'] = image_urls_list[count]
+                    embed_dict['footer']['text'] = f"{count + 1}/{len(image_urls_list)}"
                     embed = discord.Embed.from_dict(embed_dict)
                     await msg.edit(embed=embed)
                 except (Exception,):
