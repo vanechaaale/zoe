@@ -143,7 +143,7 @@ class BaseCommand(commands.Bot):
         async def rotation(c):
             await WeeklyRotationCommand.rotation(c, self)
 
-        # I'm leaving this method wihtout its own Command class because when i move it to its own file, image flipping
+        # I'm leaving this method without its own Command class because when i move it to its own file, image flipping
         # breaks lol
         @self.command(brief="Show champion skins on sale this week",
                       description="Show list of all champion skins on sale, which refreshes every Monday at 3 pm EST")
@@ -178,6 +178,8 @@ class BaseCommand(commands.Bot):
             embed.set_footer(text=f"{count + 1}/{len(image_urls_list)}")
             # Add reactions to embed message
             msg = await channel.send(embed=embed)
+            msg_id = msg.id
+            msg_embed = msg.embeds[0]
             left_arrow = "⬅"
             right_arrow = "➡"
             await msg.add_reaction(left_arrow)
@@ -185,6 +187,7 @@ class BaseCommand(commands.Bot):
 
             def check(r, u):
                 return u == channel.author and str(r.emoji) in [left_arrow, right_arrow]
+                      # and channel.message.id == msg_id
 
             # Reacting to the message will change the current skin displayed
             while True:
@@ -302,26 +305,6 @@ async def update_cache(self, user_id, game_info):
         self.cache[champ_game_tuple] = datetime.datetime.now()
         user = bot.get_user(user_id)
         await user.send(embed=get_embed_for_player(game_info))
-
-
-def get_fuzzy_match(self, champion_name):
-    for champ in self.champ_dict.values():
-        if fuzz.token_sort_ratio(champ, champion_name) >= 80:
-            return champ
-    return ''
-
-    # Given a janky version of a champion, format it to be pretty
-    #     str given_name: name input as a string
-    #     Return properly formatted champion name as a string
-
-
-def format_champion_name(self, champion_name):
-    champion_name = self.get_fuzzy_match(check_for_special_name_match(champion_name))
-    if champion_name == '':
-        return None
-    else:
-        return champion_name
-
 
 bot = BaseCommand()
 

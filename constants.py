@@ -33,8 +33,13 @@ FREE_CHAMPION_IDS = WATCHER.champion.rotations(my_region)
 
 # check league's latest patch version
 latest = WATCHER.data_dragon.versions_for_region(my_region)['n']['champion']
-# Lets get some champions static information
+# get some champions static information
 static_champ_list = WATCHER.data_dragon.champions(latest, False, 'en_US')
+CHAMP_DICT = {}
+for key in static_champ_list['data']:
+    row = static_champ_list['data'][key]
+    name = row['name']
+    CHAMP_DICT[row['key']] = name
 
 SPECIAL_CHAMPION_NAME_MATCHES_DICT = {
     "Renata": "Renata Glasc",
@@ -116,6 +121,24 @@ def check_for_special_name_match(champion_name):
         if fuzz.ratio(special_name.lower(), champion_name.lower()) >= 80:
             return official_name
     return champion_name
+
+
+def get_fuzzy_match(champion_name):
+    for champ in CHAMP_DICT.values():
+        if fuzz.token_sort_ratio(champ, champion_name) >= 80:
+            return champ
+    return ''
+
+
+# Given a janky version of a champion, format it to be pretty
+#     str given_name: name input as a string
+#     Return properly formatted champion name as a string
+def format_champion_name(champion_name):
+    champion_name = get_fuzzy_match(check_for_special_name_match(champion_name))
+    if champion_name == '':
+        return None
+    else:
+        return champion_name
 
 
 def get_all_live_matches():

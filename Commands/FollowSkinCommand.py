@@ -1,11 +1,12 @@
 import asyncio
 import discord
+from constants import format_champion_name
 from tinydb import Query
 
 
 async def favorite(message, base_command, *champion_name):
     # format champion_name
-    champion_name = base_command.format_champion_name(' '.join(champion_name))
+    champion_name = format_champion_name(' '.join(champion_name))
     if not champion_name:
         await message.channel.send(
             f"use '~favorite <champion>' to be notified when that champion's skins go on sale!")
@@ -45,6 +46,6 @@ async def favlist(message, base_command):
                 tracked_list.append(champ_name)
     if len(tracked_list) != 0:
         await message.channel.send(
-            f"{user}'s favorite champions: {', '.join(tracked_list)}")
+            f"{user.nick}'s favorite champions: {', '.join(tracked_list)}")
     else:
         await message.channel.send(f"You have no favorite champions... (Other than Zoe obviously)")
