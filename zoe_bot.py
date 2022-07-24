@@ -14,7 +14,7 @@ import requests
 import shutil
 import threading
 import time
-from Commands import GuideCommand, LiveCommand, SaleCommand, FollowProCommand, FollowSkinCommand
+from Commands import GuideCommand, LiveCommand, SaleCommand, FollowProCommand, FollowSkinCommand, WeeklyRotationCommand
 from Data import Quotes, gifs
 from PIL import Image
 from constants import *
@@ -141,15 +141,7 @@ class BaseCommand(commands.Bot):
         @self.command(brief="Show the weekly free champion rotation",
                       description="Weekly free to play champion rotation for summoner level 11+ accounts")
         async def rotation(c):
-            try:
-                free_rotation = []
-                for champion_id in self.free_champ_ids['freeChampionIds']:
-                    free_rotation.append(CHAMP_DICT[str(champion_id)])
-                free_rotation.sort()
-                free_rotation = ', '.join(free_rotation)
-                await c.channel.send("The champions in this week's free to play rotation are: " + free_rotation)
-            except (Exception,):
-                await c.channel.send(get_zoe_error_message())
+            await WeeklyRotationCommand.rotation(c, self)
 
         @self.command(brief="Show champion skins on sale this week",
                       description="Show list of all champion skins on sale, which refreshes every Monday at 3 pm EST")
@@ -163,11 +155,19 @@ class BaseCommand(commands.Bot):
         async def live(channel, *champion_name):
             await LiveCommand.live(channel, self, *champion_name)
 
-        @self.command()
-        async def test(message, *champion_name):
-            await FollowSkinCommand.follow(message, self, *champion_name)
+        @self.command(brief="Get notified when a champion has a skin on sale",
+                      description="Receive messages from Zoe Bot whenever the given champion has a skin on sale")
+        async def favorite(message, *champion_name):
+            await FollowSkinCommand.favorite(message, self, *champion_name)
 
-        @self.command(brief="Track a champion in professional play",
+        @self.command(brief="Show list of favorite champions",
+                      description="Show a list of all champions that Zoe Bot will notify a Discord User for when one "
+                                  "or more champs have skins on sale. Remove a champion from "
+                                  "this list with the command '~favorite <champion_name>'.")
+        async def favlist(message):
+            await FollowSkinCommand.favlist(message, self)
+
+        @self.command(brief="Follow a champion in professional play",
                       description="Receive messages from Zoe Bot whenever the given champion is being played in a "
                                   "professional game, or use the command again to stop receiving notifications from "
                                   "Zoe Bot.")
@@ -180,10 +180,6 @@ class BaseCommand(commands.Bot):
                                   "this list with the command '~track <champion_name>'.")
         async def following(message):
             await FollowProCommand.following(message, self)
-
-        @self.command
-        def test():
-            check_tracked_skins()
 
     async def update_cache(self, user_id, game_info):
         # update cache with new game ids upon seeing them for the first time, else it does nothing and won't msg users
