@@ -175,19 +175,20 @@ class BaseCommand(commands.Bot):
                 inline=False
             )
             embed.set_image(url=image_urls_list[count])
-            embed.set_footer(text=f"{count + 1}/{len(image_urls_list)}")
+            embed.set_footer(text=f"{count + 1}/{len(image_urls_list)}                 "
+                                  f"Shop refreshes every Monday at 3 pm EST")
             # Add reactions to embed message
             msg = await channel.send(embed=embed)
             msg_id = msg.id
-            msg_embed = msg.embeds[0]
             left_arrow = "⬅"
             right_arrow = "➡"
             await msg.add_reaction(left_arrow)
             await msg.add_reaction(right_arrow)
 
+            # Method to verify that the correct reactions were made
             def check(r, u):
-                return u == channel.author and str(r.emoji) in [left_arrow, right_arrow]
-                      # and channel.message.id == msg_id
+                return u == channel.author and str(r.emoji) in [left_arrow, right_arrow] \
+                       and r.message.id == msg_id
 
             # Reacting to the message will change the current skin displayed
             while True:
@@ -203,7 +204,8 @@ class BaseCommand(commands.Bot):
                     embed_dict = embed.to_dict()
                     embed_dict['fields'][0]['name'] = sale_skins_name_rp_costs[count]
                     embed_dict['image']['url'] = image_urls_list[count]
-                    embed_dict['footer']['text'] = f"{count + 1}/{len(image_urls_list)}"
+                    embed_dict['footer']['text'] = f"{count + 1}/{len(image_urls_list)}                 " \
+                                                   f"Shop refreshes every Monday at 3 pm EST"
                     embed = discord.Embed.from_dict(embed_dict)
                     await msg.edit(embed=embed)
                 except (Exception,):
