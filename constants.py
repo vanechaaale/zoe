@@ -395,6 +395,7 @@ def find_pro_play_matchup(champion_name):
 async def check_tracked_champions(bot):
     # Every minute, checks all live champions and their db of subscribed users to message the users about a game
     # where the champion is being played, then updates the cache if the user has not already been messaged
+    db = DB
     all_live_champs = get_all_live_champs()
     champion = Query()
     for champ in all_live_champs:
@@ -409,10 +410,11 @@ async def check_tracked_champions(bot):
 
 async def update_cache(bot, user_id, game_info):
     # update cache with new game ids upon seeing them for the first time, else it does nothing and won't msg users
+    cache = bot.cache
     game_id = game_info['player'][7]
     champion = game_info['player'][1]
     champ_game_tuple = champion, game_id
-    if champ_game_tuple not in bot.cache:
-        self.cache[champ_game_tuple] = datetime.datetime.now()
+    if champ_game_tuple not in cache:
+        cache[champ_game_tuple] = datetime.datetime.now()
         user = bot.get_user(user_id)
         await user.send(embed=get_embed_for_player(game_info, pm=True))

@@ -67,7 +67,7 @@ class BaseCommand(commands.Bot):
             await bot.change_presence(status=discord.Status.online, activity=activity)
             await check_tracked_skins(self)
             while True:
-                # await check_tracked_champions(self)
+                await check_tracked_champions(self)
                 await clear_cache(self.cache, cache_clear_hours)
                 await asyncio.sleep(check_tracked_mins)
                 # Run the skin sales webscraper every week and notify users about liked champions with skins on sale
