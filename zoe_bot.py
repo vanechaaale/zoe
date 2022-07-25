@@ -8,12 +8,13 @@ import cv2
 import discord
 import json
 import numpy as np
+import os
 import random
 import re
 import requests
 import shutil
 # runs the skin sales webscraper and automatically updates all the skins on sale in the league shop
-import skin_sales_spider
+# import skin_sales_spider
 import threading
 import time
 from Commands import GuideCommand, LiveCommand, SaleCommand, FollowProCommand, FollowSkinCommand, WeeklyRotationCommand
@@ -60,13 +61,14 @@ class BaseCommand(commands.Bot):
             name = row['name']
             CHAMP_DICT[row['key']] = name
         self.champ_dict = CHAMP_DICT
+        self.champ_skins_set = constants.CHAMP_SKINS_SET
         self.cache = dict()
         self.bot = commands.Bot(
             command_prefix='~', help_command=help_command,
             description="I'm Zoe, what's your name?", intents=intents)
         # USING ALPHA DATABASES
         self.db = TinyDB('Data/test_database.json')
-        self.skin_db = TinyDB('Data/test_skin_database.json')
+        self.favorite_skin_db = TinyDB('Data/test_skin_database.json')
         self.free_champ_ids = WATCHER.champion.rotations(my_region)
 
         @self.event
@@ -75,10 +77,13 @@ class BaseCommand(commands.Bot):
             check_tracked_mins = 3 * 60
             activity = discord.Game(name="Do something fun! The world might be ending... Or not!")
             await bot.change_presence(status=discord.Status.online, activity=activity)
+            await check_tracked_skins(self)
             while True:
                 await check_tracked_champions(self)
                 await clear_cache(self.cache, cache_clear_hours)
                 await asyncio.sleep(check_tracked_mins)
+                # Run the skin sales webscraper every week and notify users about liked champions with skins on sale
+                # os.system('python filename.py')
 
         @self.command(hidden=True)
         @commands.is_owner()
@@ -88,8 +93,12 @@ class BaseCommand(commands.Bot):
 
         @self.command(hidden=True)
         @commands.is_owner()
-        async def run_sales_spider():
-            """WORK IN PROGRESS"""
+        async def update_skin_sales():
+            """WORK IN PROGRESS
+            Method to run the skin sales webscraper and notify users about their liked champs
+            """
+            os.system('python skin_sales_spider.py')
+            await check_tracked_skins(self)
 
         @self.event
         async def on_guild_join(guild):

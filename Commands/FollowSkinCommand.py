@@ -11,7 +11,7 @@ async def favorite(message, base_command, *champion_name):
     champion_name = format_champion_name(' '.join(champion_name))
     if not champion_name and not old_champion_name:
         await message.channel.send(
-            "use '~follow <champion>' to be notified when a champion is being played in a professional match!")
+            "use '~favorite <champion>' to be notified when a champion is being played in a professional match!")
         return
     elif not champion_name and old_champion_name:
         await message.channel.send(
@@ -20,7 +20,7 @@ async def favorite(message, base_command, *champion_name):
     # Query champion user id list
     champion = Query()
     user_id = message.author.id
-    skin_db = base_command.skin_db
+    skin_db = base_command.favorite_skin_db
     champ_name_user_ids_dict = skin_db.get(champion['champion_name'] == champion_name)
     # I tried using a set but it broke whenever i called db.insert()
     user_ids_list = [] if champ_name_user_ids_dict is None else champ_name_user_ids_dict['user_ids']
@@ -44,7 +44,7 @@ async def favlist(message, base_command):
     # user = message.author
     for champ_name in base_command.champ_dict.values():
         champion = Query()
-        skin_db = base_command.skin_db
+        skin_db = base_command.favorite_skin_db
         query_results = skin_db.get(champion['champion_name'] == champ_name)
         if query_results is not None:
             user_ids_list = query_results['user_ids']

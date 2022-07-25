@@ -90,30 +90,69 @@ async def clear_cache(cache, h):
                 cache.pop(key)
 
 
-async def check_tracked_skins():
+# Initialize champ_skins_dict: Dict['champion'] -> [List of champ's skins by name]
+def get_champion_skins_set(champ_dict):
+    champ_skins_set = dict()
+    API_URL_NAME_MATCHES = {
+        "Jarvan IV": "JarvanIV",
+        "Nunu & Willump": "Nunu",
+        "Kog\'Maw": "KogMaw",
+        "LeBlanc": "Leblanc",
+        "Wukong": "MonkeyKing",
+        "Rek'Sai": "RekSai",
+        "Renata Glasc": "Renata",
+    }
+    for champion in champ_dict.values():
+        # Special Case names
+        if champion in API_URL_NAME_MATCHES.keys():
+            url_champion = API_URL_NAME_MATCHES[champion]
+        elif "'" in champion:
+            # Account for Void champion names ('Kai'sa') formatting
+            url_champion = champion.replace("'", '').lower().capitalize()
+        else:
+            # and champions with space in their names ('Lee Sin'), as well as '.' (looking at you mundo)
+            url_champion = champion.replace(' ', '').replace('.', '') if ' ' in champion or '.' in champion \
+                else champion
+        with urllib.request.urlopen(
+                f'https://ddragon.leagueoflegends.com/cdn/{latest}/data/en_US/champion/{url_champion}.json') as url:
+            curr_champ_skins = set()
+            champion_dict = json.loads(url.read().decode())
+            list_of_champ_skins = champion_dict['data'][url_champion]['skins']
+            for skin in list_of_champ_skins:
+                curr_champ_skins.add(skin['name'])
+        champ_skins_set[champion] = curr_champ_skins
+    return champ_skins_set
+
+
+CHAMP_SKINS_SET = get_champion_skins_set(CHAMP_DICT)
+
+
+async def check_tracked_skins(bot):
+    """Message people to notify if a champ they like has a skin on sale"""
     with open("Data/skin_sales_data.json", 'r') as file:
-        skins_sale_dictionary = json.load(file)
-        # message people to notify if a champ they like has a skin on sale
-        constants = Constants()
-        skin_sales_db = Constants.SKIN_DB
-        static_champ_skins_dict = constants.STATIC_SKINS_DICT
-        # For every champion skin on sale...
-        for entry in skins_sale_dictionary:
+        skins_sale_data = json.load(file)
+        favorite_skin_db = bot.favorite_skin_db
+        skin_sales_list = []
+        # Parse data of every skin on sale
+        for entry in skins_sale_data:
             skin_name_rp_cost = " ".join(entry['skin_name_rp_cost'].split())
             skin_data = skin_name_rp_cost.split(' ')
             skin_name = skin_data[0: len(skin_data) - 3]
             skin_rp_cost = skin_data[len(skin_data) - 2: len(skin_data)]
-            # Search all champions and check if the current skin is in this champion's list of skins
-            for champ_name in constants.STATIC_SKINS_DICT.keys():
-                if skin_name in static_champ_skins_dict[champ_name]:
+            # Add each skin name to the list of skins on sale
+            skin_sales_list.append(' '.join(skin_name))
+            # Search for current skin in all champions' sets of skins
+        for skin_name in skin_sales_list:
+            for champ_name in CHAMP_DICT.values():
+                if skin_name in CHAMP_SKINS_SET[champ_name]:
                     champion = Query()
-                    query_results = skin_sales_db.get(champion['champion_name'] == champ_name)
+                    query_results = favorite_skin_db.get(champion['champion_name'] == champ_name)
                     if query_results is not None:
                         user_ids_list = query_results['user_ids']
                         for user_id in user_ids_list:
                             print(f"{user_id}: {skin_name} is on sale")
-                            user = BOT.get_user(user_id)
-                            await user.send(user_id, f"{skin_name} is on sale for {skin_rp_cost}!")
+                            user = bot.get_user(user_id)
+                            await user.send(f"{skin_name} is on sale this week for {' '.join(skin_rp_cost)}!")
 
 
 def check_for_special_name_match(champion_name):
