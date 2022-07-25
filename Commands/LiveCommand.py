@@ -21,9 +21,13 @@ async def live(channel, *champion_name):
             await channel.send(f"No champion with name '{original_message}' was found.")
             return
         matches_found = find_pro_play_matchup(champion_name)
+        # Sometimes there are repeat copies of the same match
+        seen = []
         if matches_found:
             for game_info in matches_found:
-                await channel.send(embed=get_embed_for_player(game_info))
+                if game_info not in seen:
+                    seen.append(game_info)
+                    await channel.send(embed=get_embed_for_player(game_info))
         else:
             await channel.send(f"{champion_name} isn't on Summoner's Rift right now :(")
     except (Exception,):

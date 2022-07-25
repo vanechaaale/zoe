@@ -122,6 +122,13 @@ class BaseCommand(commands.Bot):
         async def gif(channel):
             await channel.send(random.choice(gifs.gifs))
 
+        @self.command(brief="Show live professional games of a champion",
+                      description="Given a champion's name, shows a list of all live professional games where the "
+                                  "champion is being played, or use '~live all' to see a list of all champions in "
+                                  "live games")
+        async def live(channel, *champion_name):
+            await LiveCommand.live(channel, *champion_name)
+
         @self.command(brief="Show Zoe matchup tips! (WIP)",
                       description="View Zoe's matchup statistics against a champion")
         async def matchup(channel, champion):
@@ -220,13 +227,6 @@ class BaseCommand(commands.Bot):
                     await msg.edit(embed=embed)
                 except (Exception,):
                     pass
-
-        @self.command(brief="Show live professional games of a champion",
-                      description="Given a champion's name, shows a list of all live professional games where the "
-                                  "champion is being played, or use '~live all' to see a list of all champions in "
-                                  "live games")
-        async def live(channel, *champion_name):
-            await LiveCommand.live(channel, *champion_name)
 
         @self.command(brief="Get notified when a champion has a skin on sale",
                       description="Receive messages from Zoe Bot whenever the given champion has a skin on sale")
