@@ -53,8 +53,10 @@ class BaseCommand(commands.Bot):
         self.champ_skins_set = constants.CHAMP_SKINS_DICT
         self.cache = dict()
         self.bot = commands.Bot(
-            command_prefix='~', help_command=help_command,
-            description="I'm Zoe, what's your name?", intents=intents)
+            command_prefix='~',
+            help_command=help_command,
+            description="I'm Zoe, what's your name?",
+            intents=intents)
         self.db = constants.DB
         self.favorite_skin_db = constants.SKIN_DB
         self.free_champ_ids = constants.FREE_CHAMPION_IDS
@@ -67,11 +69,10 @@ class BaseCommand(commands.Bot):
             await bot.change_presence(status=discord.Status.online, activity=activity)
             await check_tracked_skins(self)
             while True:
+                # Champions being followed in pro play are tracked in this loop
                 await check_tracked_champions(self)
                 await clear_cache(self.cache, cache_clear_hours)
                 await asyncio.sleep(check_tracked_mins)
-                # Run the skin sales webscraper every week and notify users about liked champions with skins on sale
-                # os.system('python filename.py')
 
         @self.command(hidden=True)
         @commands.is_owner()
@@ -209,8 +210,7 @@ class BaseCommand(commands.Bot):
 
             # Method to verify that either arrow reaction was made on the embedded message by a non-bot user
             def check(r, u):
-                return str(r.emoji) in [left_arrow, right_arrow] \
-                       and r.message.id == msg_id and not u.bot
+                return str(r.emoji) in [left_arrow, right_arrow] and r.message.id == msg_id and not u.bot
 
             # Reacting to the message will change the current skin displayed
             while True:
@@ -227,8 +227,8 @@ class BaseCommand(commands.Bot):
                     embed_dict['fields'][0]['name'] = skin_sales_data[count][0]
                     embed_dict['fields'][0]['value'] = skin_sales_data[count][1]
                     embed_dict['image']['url'] = image_urls_list[count]
-                    embed_dict['footer']['text'] = f"{count + 1}/{len(image_urls_list)}\nShop refreshes every Monday " \
-                                                   f"at 3 pm EST "
+                    embed_dict['footer']['text'] = \
+                        f"{count + 1}/{len(image_urls_list)}\nShop refreshes every Monday at 3 pm EST "
                     embed = discord.Embed.from_dict(embed_dict)
                     await msg.edit(embed=embed)
                 except (Exception,):

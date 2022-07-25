@@ -161,22 +161,6 @@ async def check_tracked_skins(bot):
                                             f"\n**You are receiving this message because you opted to track League of "
                                             f"Legends skin sales for this champion. To disable these messages, reply "
                                             f"with '~favorite <champion_name>'**")
-        #
-        #     # Search for current skin in all champions' sets of skins
-        # for skin_name in skin_sales_list:
-        #     for champ_name in CHAMP_DICT.values():
-        #         if skin_name in CHAMP_SKINS_SET[champ_name]:
-        #             champion = Query()
-        #             query_results = favorite_skin_db.get(champion['champion_name'] == champ_name)
-        #             if query_results is not None:
-        #                 user_ids_list = query_results['user_ids']
-        #                 for user_id in user_ids_list:
-        #                     # print(f"{user_id}: {skin_name} is on sale")
-        #                     user = bot.get_user(user_id)
-        #                     await user.send(f"{skin_name} is on sale this week for {' '.join(skin_rp_cost)}!"
-        #                                     f"\n**You are receiving this message because you opted to track League of "
-        #                                     f"Legends skin sales for this champion. To disable these messages, reply "
-        #                                     f"with '~favorite <champion_name>'**")
 
 
 def check_for_special_name_match(champion_name):
@@ -204,12 +188,14 @@ def format_champion_name(champion_name):
         return champion_name
 
 
+# Return data for all live pro play games
 def get_all_live_matches():
     live_matches = API.get_live()
     matches = live_matches['schedule']['events']
     return matches
 
 
+# Return the two team icons for a live match
 def get_team_icons(live_match):
     teams = live_match['match']['teams']
     icons_dict = dict()
@@ -220,6 +206,7 @@ def get_team_icons(live_match):
     return icons_dict
 
 
+# Return the icon for a team
 def get_icon(player_champ_info, icons_dict):
     player_name = player_champ_info[0]
     data = player_name.split(' ')
@@ -227,15 +214,16 @@ def get_icon(player_champ_info, icons_dict):
     return icons_dict[team_code]
 
 
+# Given a bunch of games in a match, return the match id of the one in progress
 def get_live_match_id(games):
-    # Given a bunch of games in a match, return the match id of the one in progress
     for game in games:
         if game['state'] == "inProgress":
             return int(game['id'])
 
 
-# Given player_champ_tourney_etc info, returns an embed with all relevant information attached
 def get_embed_for_player(game_info, pm=False):
+    """Given game info, returns an embed with all relevant information attached
+    """
     embed = discord.Embed(color=0x87cefa)
     player_info = game_info['player']
     player_name = player_info[0]
@@ -269,6 +257,7 @@ def get_zoe_error_message():
         return f'"*{quote}*"'
 
 
+# Get champions being played on a team
 def get_champs_on_team(team):
     live_champs = set()
     for player in team:
@@ -281,8 +270,8 @@ def get_champs_on_team(team):
     return live_champs
 
 
+# Gather game data for a live game in a match
 def get_live_game_data(live_match):
-    # Gather game data for a live game in a match
     game_id = get_live_match_id(live_match['match']['games'])
     if game_id is not None:
         try:
@@ -292,8 +281,8 @@ def get_live_game_data(live_match):
             pass
 
 
+# Return a list of all champs currently in pro play
 def get_all_live_champs():
-    # Return a list of all champs currently in pro play
     all_live_champs_set = set()
     live_matches = get_all_live_matches()
     for live_match in live_matches:
@@ -313,8 +302,8 @@ def get_all_live_champs():
     return all_live_champs
 
 
+# Send list of all champions in live pro games
 async def pro_all(channel):
-    # Send list of all champions in live pro games
     all_live_champs = get_all_live_champs()
     if len(all_live_champs) == 0 or all_live_champs is None:
         await channel.send("No champions found in live professional games :(")
@@ -322,8 +311,8 @@ async def pro_all(channel):
         await channel.send("All champions in live professional games: " + ', '.join(all_live_champs))
 
 
+# Given a team and a role, returns the player in that role
 def get_player_info(role, team):
-    # Given a team and a role, returns the player in that role
     for player in team:
         r = player['role'].capitalize()
         if r == role:
@@ -332,9 +321,8 @@ def get_player_info(role, team):
             return [player_name, champion_name, role]
 
 
+# "Is {champion_name} on the given teams? -> Return player_champ_tourney_info
 def is_champion_on_team(team, champion_name):
-    # Given the red or blue side, tourney name, block name, and champ name, returns the player_champ_tourney_info
-    # if the given champ is on the team
     for player in team:
         # player['championId'] wont include spaces which breaks format_champion_name(), hence why it is not used
         champion = check_for_special_name_match(re.sub(r"([A-Z])", r" \1", player['championId'])[1:])
@@ -345,8 +333,10 @@ def is_champion_on_team(team, champion_name):
 
 
 def find_pro_play_matchup(champion_name):
-    # Given a champion name, searches all live pro games and returns a list of tuples containing information about
-    # the player, their champ name, role, and tourney
+    """
+    Given a champion name, searches all live pro games and returns a list of tuples containing information about
+    the player, their champ name, role, and tourney
+    """
     matches_found = []
     game_info = dict()
     live_matches = get_all_live_matches()
@@ -393,8 +383,9 @@ def find_pro_play_matchup(champion_name):
 
 
 async def check_tracked_champions(bot):
-    # Every minute, checks all live champions and their db of subscribed users to message the users about a game
-    # where the champion is being played, then updates the cache if the user has not already been messaged
+    """Every minute, checks all live champions and their db of subscribed users to message the users about a game
+    where the champion is being played, then updates the cache if the user has not already been messaged
+    """
     db = DB
     all_live_champs = get_all_live_champs()
     champion = Query()
@@ -409,7 +400,9 @@ async def check_tracked_champions(bot):
 
 
 async def update_cache(bot, user_id, game_info):
-    # update cache with new game ids upon seeing them for the first time, else it does nothing and won't msg users
+    """
+    Update cache with new game ids upon seeing them for the first time, else it does nothing and won't msg users
+    """
     cache = bot.cache
     game_id = game_info['player'][7]
     champion = game_info['player'][1]
