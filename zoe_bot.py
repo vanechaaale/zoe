@@ -45,31 +45,15 @@ class BaseCommand(commands.Bot):
             description="I'm Zoe, what's your name?",
             intents=intents
         )
-        # read API key for lolesports api
-        with open('Data/api_key') as f:
-            API_KEY = f.readline()
-        WATCHER = LolWatcher(API_KEY)
-        my_region = 'na1'
-
-        # check league's latest patch version
-        latest = WATCHER.data_dragon.versions_for_region(my_region)['n']['champion']
-        # get some champions static information
-        static_champ_list = WATCHER.data_dragon.champions(latest, False, 'en_US')
-        CHAMP_DICT = {}
-        for key in static_champ_list['data']:
-            row = static_champ_list['data'][key]
-            name = row['name']
-            CHAMP_DICT[row['key']] = name
-        self.champ_dict = CHAMP_DICT
+        self.champ_dict = constants.CHAMP_DICT
         self.champ_skins_set = constants.CHAMP_SKINS_DICT
         self.cache = dict()
         self.bot = commands.Bot(
             command_prefix='~', help_command=help_command,
             description="I'm Zoe, what's your name?", intents=intents)
-        # USING ALPHA DATABASES
-        self.db = TinyDB('Data/test_database.json')
-        self.favorite_skin_db = TinyDB('Data/test_skin_database.json')
-        self.free_champ_ids = WATCHER.champion.rotations(my_region)
+        self.db = constants.DB
+        self.favorite_skin_db = constants.SKIN_DB
+        self.free_champ_ids = constants.FREE_CHAMPION_IDS
 
         @self.event
         async def on_ready():
@@ -95,7 +79,7 @@ class BaseCommand(commands.Bot):
         @commands.is_owner()
         async def update_skin_sales(channel, *args):
             """
-            Method to run the skin sales webscraper AND notify users about their liked champs
+            Command to manually run the skin sales webscraper AND notify users about their liked champs
             """
             args = ' '.join(args)
             if args.lower() == 'spider':

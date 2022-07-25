@@ -20,7 +20,7 @@ from threading import Thread
 from tinydb import TinyDB, Query, where
 
 # USING ALPHA DATABASES
-db = TinyDB('Data/test_database.json')
+DB = TinyDB('Data/test_database.json')
 SKIN_DB = TinyDB('Data/test_skin_database.json')
 
 # read API key

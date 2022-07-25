@@ -27,11 +27,11 @@ async def follow(message, base_command, *champion_name):
     if champ_name_user_ids_dict is None:
         user_ids_list.append(user_id)
         db.insert({'champion_name': champion_name, 'user_ids': user_ids_list})
-        await message.channel.send(f"Now following live pro play games for {champion_name}.")
+        await message.channel.send(f"Now following live professional games for {champion_name}.")
     elif user_id not in user_ids_list:
         user_ids_list.append(user_id)
         db.update({'user_ids': user_ids_list}, champion['champion_name'] == champion_name)
-        await message.channel.send(f"Now following live pro play games for {champion_name}.")
+        await message.channel.send(f"Now following live professional games for {champion_name}.")
     else:
         user_ids_list.remove(user_id)
         db.update({'user_ids': user_ids_list}, champion['champion_name'] == champion_name)
