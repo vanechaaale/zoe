@@ -89,7 +89,8 @@ def main():
             r = requests.get(image_url,
                              stream=True, headers={'User-agent': 'Mozilla/5.0'})
             if r.status_code == 200:
-                with open(f"Data/single_skin_image{count}.jpg", 'wb') as file:
+                # Write a single skin splashart to the Data/skin_sale_jpgs dir
+                with open(f"Data/skin_sale_jpgs/single_skin_image{count}.jpg", 'wb') as file:
                     r.raw.decode_content = True
                     shutil.copyfileobj(r.raw, file)
                     image = imread(file.name)[..., :3]
@@ -109,6 +110,7 @@ def main():
     # rows = np.hstack(images[0:3]), np.hstack(images[3:6]), np.hstack(images[6:9]), np.hstack(images[9:12]), \
     #        np.hstack(images[12:15])
     full_image = np.vstack(rows)
+    # Full image of all 15 sale skins
     imwrite('Data/full_skin_sales_image.jpg', full_image)
     print(f'Skin sales spider finished scraping at {datetime.now()}')
 

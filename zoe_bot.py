@@ -61,7 +61,7 @@ class BaseCommand(commands.Bot):
             name = row['name']
             CHAMP_DICT[row['key']] = name
         self.champ_dict = CHAMP_DICT
-        self.champ_skins_set = constants.CHAMP_SKINS_SET
+        self.champ_skins_set = constants.CHAMP_SKINS_DICT
         self.cache = dict()
         self.bot = commands.Bot(
             command_prefix='~', help_command=help_command,

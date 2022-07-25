@@ -1,5 +1,6 @@
 import BaseMessageResponse
 import Data
+import ast
 import asyncio
 import constants
 import datetime
@@ -90,9 +91,9 @@ async def clear_cache(cache, h):
                 cache.pop(key)
 
 
-# Initialize champ_skins_dict: Dict['champion'] -> [List of champ's skins by name]
+# Initialize CHAMP_SKINS_DICT: Dict['champion'] -> {Set of champ's skins by name}
 def get_champion_skins_set(champ_dict):
-    champ_skins_set = dict()
+    champ_skins_dict = dict()
     API_URL_NAME_MATCHES = {
         "Jarvan IV": "JarvanIV",
         "Nunu & Willump": "Nunu",
@@ -114,17 +115,26 @@ def get_champion_skins_set(champ_dict):
             url_champion = champion.replace(' ', '').replace('.', '') if ' ' in champion or '.' in champion \
                 else champion
         with urllib.request.urlopen(
+                # Search for all champs' skin data on ddragon
                 f'https://ddragon.leagueoflegends.com/cdn/{latest}/data/en_US/champion/{url_champion}.json') as url:
             curr_champ_skins = set()
             champion_dict = json.loads(url.read().decode())
+            # Retrieve list of champ skins
             list_of_champ_skins = champion_dict['data'][url_champion]['skins']
+            # Add only the skin names to a set
             for skin in list_of_champ_skins:
                 curr_champ_skins.add(skin['name'])
-        champ_skins_set[champion] = curr_champ_skins
-    return champ_skins_set
+        champ_skins_dict[champion] = curr_champ_skins
+    # Write the dictionary to a json file so that I don't have to run this every time i start up the bot
+    with open('Data/all_champion_skins.txt', 'w') as file:
+        file.write(str(champ_skins_dict))
+    return champ_skins_dict
 
 
-CHAMP_SKINS_SET = get_champion_skins_set(CHAMP_DICT)
+# CHAMP_SKINS_DICT = get_champion_skins_set(CHAMP_DICT)
+with open('Data/all_champion_skins.txt') as f:
+    data = f.read()
+    CHAMP_SKINS_DICT = ast.literal_eval(data)
 
 
 async def check_tracked_skins(bot):
@@ -132,19 +142,14 @@ async def check_tracked_skins(bot):
     with open("Data/skin_sales_data.json", 'r') as file:
         skins_sale_data = json.load(file)
         favorite_skin_db = bot.favorite_skin_db
-        skin_sales_list = []
         # Parse data of every skin on sale
         for entry in skins_sale_data:
             skin_name_rp_cost = " ".join(entry['skin_name_rp_cost'].split())
             skin_data = skin_name_rp_cost.split(' ')
-            skin_name = skin_data[0: len(skin_data) - 3]
-            skin_rp_cost = skin_data[len(skin_data) - 2: len(skin_data)]
-            # Add each skin name to the list of skins on sale
-            skin_sales_list.append(' '.join(skin_name))
-            # Search for current skin in all champions' sets of skins
-        for skin_name in skin_sales_list:
+            skin_name = ' '.join(skin_data[0: len(skin_data) - 3])
+            skin_rp_cost = ' '.join(skin_data[len(skin_data) - 2: len(skin_data)])
             for champ_name in CHAMP_DICT.values():
-                if skin_name in CHAMP_SKINS_SET[champ_name]:
+                if skin_name in CHAMP_SKINS_DICT[champ_name]:
                     champion = Query()
                     query_results = favorite_skin_db.get(champion['champion_name'] == champ_name)
                     if query_results is not None:
@@ -152,10 +157,26 @@ async def check_tracked_skins(bot):
                         for user_id in user_ids_list:
                             # print(f"{user_id}: {skin_name} is on sale")
                             user = bot.get_user(user_id)
-                            await user.send(f"{skin_name} is on sale this week for {' '.join(skin_rp_cost)}!"
+                            await user.send(f"{skin_name} is on sale this week for {skin_rp_cost}!"
                                             f"\n**You are receiving this message because you opted to track League of "
                                             f"Legends skin sales for this champion. To disable these messages, reply "
                                             f"with '~favorite <champion_name>'**")
+        #
+        #     # Search for current skin in all champions' sets of skins
+        # for skin_name in skin_sales_list:
+        #     for champ_name in CHAMP_DICT.values():
+        #         if skin_name in CHAMP_SKINS_SET[champ_name]:
+        #             champion = Query()
+        #             query_results = favorite_skin_db.get(champion['champion_name'] == champ_name)
+        #             if query_results is not None:
+        #                 user_ids_list = query_results['user_ids']
+        #                 for user_id in user_ids_list:
+        #                     # print(f"{user_id}: {skin_name} is on sale")
+        #                     user = bot.get_user(user_id)
+        #                     await user.send(f"{skin_name} is on sale this week for {' '.join(skin_rp_cost)}!"
+        #                                     f"\n**You are receiving this message because you opted to track League of "
+        #                                     f"Legends skin sales for this champion. To disable these messages, reply "
+        #                                     f"with '~favorite <champion_name>'**")
 
 
 def check_for_special_name_match(champion_name):
