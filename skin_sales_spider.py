@@ -1,18 +1,13 @@
-import constants
 import cv2
-import getopt
 import json
 import numpy as np
 import os
 import requests
 import scrapy
 import shutil
-import sys
 from datetime import datetime
 from imageio import imread, imwrite
 from scrapy.crawler import CrawlerProcess
-from tinydb import TinyDB, Query, where
-from urllib.request import Request, urlopen
 
 
 # Python script to scrape earlygame.com for skin sales

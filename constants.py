@@ -1,23 +1,18 @@
-import BaseMessageResponse
-import Data
 import ast
-import asyncio
-import constants
 import datetime
-import discord
 import json
 import random
 import re
-import threading
-import time
 import urllib.request
-from Data import Quotes, gifs
-from discord.ext import commands
+from json import JSONDecodeError
+
+import discord
 from fuzzywuzzy import fuzz
-from lolesports_api import Lolesports_API
 from riotwatcher import LolWatcher
-from threading import Thread
-from tinydb import TinyDB, Query, where
+from tinydb import TinyDB, Query
+
+from Data import Quotes
+from lolesports_api import Lolesports_API
 
 # USING ALPHA DATABASES
 DB = TinyDB('Data/test_database.json')
@@ -209,8 +204,8 @@ def get_team_icons(live_match):
 # Return the icon for a team
 def get_icon(player_champ_info, icons_dict):
     player_name = player_champ_info[0]
-    data = player_name.split(' ')
-    team_code = data[0]
+    info = player_name.split(' ')
+    team_code = info[0]
     return icons_dict[team_code]
 
 
@@ -277,7 +272,7 @@ def get_live_game_data(live_match):
         try:
             return API.get_window(game_id, "")
         # JSONDecodeError occurs if game is unstarted
-        except JSONDecodeErorr:
+        except JSONDecodeError:
             pass
 
 
@@ -346,7 +341,7 @@ def find_pro_play_matchup(champion_name):
                 # LCS, LCK, LEC, etc.
                 # live_match['streams'] returns a list of dictionaries with streams info
                 # streams['parameter'] returns the server (hopefully)
-                league = live_match['streams']
+                # league = live_match['streams']
                 tournament_name = live_match['league']['name']
                 block_name = live_match['blockName']
                 url_slug = live_match['league']['slug']

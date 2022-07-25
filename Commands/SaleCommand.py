@@ -1,5 +1,3 @@
-import Data
-import asyncio
 import discord
 import json
 import random

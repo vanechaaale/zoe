@@ -1,16 +1,8 @@
-from fuzzywuzzy import fuzz
-import discord
 import random
 import re
 import discord
-from discord.ext import commands
-import Data
-from Data import Quotes, gifs
-from riotwatcher import LolWatcher
-from lolesports_api import Lolesports_API
+from Data import Quotes
 from fuzzywuzzy import fuzz
-import threading
-from tinydb import TinyDB, Query, where
 
 
 class BaseMessageResponse:

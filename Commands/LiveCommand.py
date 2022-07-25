@@ -1,4 +1,3 @@
-import asyncio
 import discord
 from constants import check_for_special_name_match, find_pro_play_matchup, pro_all, get_embed_for_player, \
     get_fuzzy_match, get_zoe_error_message

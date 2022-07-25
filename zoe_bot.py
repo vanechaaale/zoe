@@ -1,34 +1,12 @@
-import BaseMessageResponse
-import Commands
-import Data
-import PIL
 import asyncio
-import constants
-import cv2
-import discord
-import json
-import numpy as np
 import os
-import random
-import re
-import requests
-import shutil
-import threading
-import time
+
+import BaseMessageResponse
+import constants
 from Commands import GuideCommand, LiveCommand, SaleCommand, FollowProCommand, FollowSkinCommand, WeeklyRotationCommand
-from Data import Quotes, gifs
-from PIL import Image
+from Data import gifs
 from constants import *
-from discord import Webhook, RequestsWebhookAdapter, File
 from discord.ext import commands
-from discord.ext.commands import Context
-from fuzzywuzzy import fuzz
-from imageio import imread, imwrite
-from lolesports_api import Lolesports_API
-from riotwatcher import LolWatcher
-from threading import Thread
-from tinydb import TinyDB, Query, where
-from urllib.request import Request, urlopen
 # runs the skin sales webscraper and automatically updates all the skins on sale in the league shop
 # import skin_sales_spider
 
@@ -262,7 +240,7 @@ class BaseCommand(commands.Bot):
 
         @self.command(hidden=True)
         async def test(channel):
-            await SaleCommand.sale(channel, self)
+            await SaleCommand.sale(channel)
 
 
 bot = BaseCommand()
@@ -270,8 +248,8 @@ bot = BaseCommand()
 
 def main():
     # Start up the bot
-    with open('Data/alpha_token') as f:
-        token = f.readline()
+    with open('Data/alpha_token') as file:
+        token = file.readline()
     bot.run(token)
 
 

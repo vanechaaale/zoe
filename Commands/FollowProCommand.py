@@ -1,5 +1,3 @@
-import asyncio
-import discord
 from tinydb import Query
 from constants import format_champion_name
 
