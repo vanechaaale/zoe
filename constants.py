@@ -150,9 +150,12 @@ async def check_tracked_skins(bot):
                     if query_results is not None:
                         user_ids_list = query_results['user_ids']
                         for user_id in user_ids_list:
-                            print(f"{user_id}: {skin_name} is on sale")
+                            # print(f"{user_id}: {skin_name} is on sale")
                             user = bot.get_user(user_id)
-                            await user.send(f"{skin_name} is on sale this week for {' '.join(skin_rp_cost)}!")
+                            await user.send(f"{skin_name} is on sale this week for {' '.join(skin_rp_cost)}!"
+                                            f"\n**You are receiving this message because you opted to track League of "
+                                            f"Legends skin sales for this champion. To disable these messages, reply "
+                                            f"with '~favorite <champion_name>'**")
 
 
 def check_for_special_name_match(champion_name):
@@ -376,4 +379,15 @@ async def check_tracked_champions(bot):
                 matches_found = find_pro_play_matchup(champ)
                 if matches_found:
                     for game_info in matches_found:
-                        await bot.update_cache(user_id, game_info)
+                        await update_cache(bot, user_id, game_info)
+
+
+async def update_cache(bot, user_id, game_info):
+    # update cache with new game ids upon seeing them for the first time, else it does nothing and won't msg users
+    game_id = game_info['player'][7]
+    champion = game_info['player'][1]
+    champ_game_tuple = champion, game_id
+    if champ_game_tuple not in bot.cache:
+        self.cache[champ_game_tuple] = datetime.datetime.now()
+        user = bot.get_user(user_id)
+        await user.send(embed=get_embed_for_player(game_info))

@@ -271,17 +271,6 @@ class BaseCommand(commands.Bot):
             await SaleCommand.sale(channel, self)
 
 
-async def update_cache(self, user_id, game_info):
-    # update cache with new game ids upon seeing them for the first time, else it does nothing and won't msg users
-    game_id = game_info['player'][7]
-    champion = game_info['player'][1]
-    champ_game_tuple = champion, game_id
-    if champ_game_tuple not in self.cache:
-        self.cache[champ_game_tuple] = datetime.datetime.now()
-        user = bot.get_user(user_id)
-        await user.send(embed=get_embed_for_player(game_info))
-
-
 bot = BaseCommand()
 
 
