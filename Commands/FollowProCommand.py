@@ -11,7 +11,7 @@ async def follow(message, base_command, *champion_name):
     champion_name = format_champion_name(' '.join(champion_name))
     if not champion_name and not old_champion_name:
         await message.channel.send(
-            "use '~follow <champion>' to be notified when a champion is being played in a professional match!")
+            "use '~follow <champion>' to be notified when a champion is live in pro play!")
         return
     elif not champion_name and old_champion_name:
         await message.channel.send(
@@ -27,11 +27,11 @@ async def follow(message, base_command, *champion_name):
     if champ_name_user_ids_dict is None:
         user_ids_list.append(user_id)
         db.insert({'champion_name': champion_name, 'user_ids': user_ids_list})
-        await message.channel.send(f"Now tracking live professional games for {champion_name}.")
+        await message.channel.send(f"Now following live pro play games for {champion_name}.")
     elif user_id not in user_ids_list:
         user_ids_list.append(user_id)
         db.update({'user_ids': user_ids_list}, champion['champion_name'] == champion_name)
-        await message.channel.send(f"Now following live professional games for {champion_name}.")
+        await message.channel.send(f"Now following live pro play games for {champion_name}.")
     else:
         user_ids_list.remove(user_id)
         db.update({'user_ids': user_ids_list}, champion['champion_name'] == champion_name)
@@ -52,7 +52,7 @@ async def following(message, base_command):
     if len(tracked_list) != 0:
         await message.channel.send(
             # f"Currently tracking professional matches for: {', '.join(tracked_list)}")
-            f"<@{user_id}> is currently following live professional games for: favorite champions: "
+            f"<@{user_id}> is currently following pro play for:"
             f"{', '.join(tracked_list)}")
     else:
         await message.channel.send(f"You are currently not tracking live games for any champion.")
