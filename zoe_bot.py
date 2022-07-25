@@ -148,17 +148,17 @@ class BaseCommand(commands.Bot):
         @self.command(brief="Show champion skins on sale this week",
                       description="Show list of all champion skins on sale, which refreshes every Monday at 3 pm EST")
         async def sale(channel):
-            sale_skins_name_rp_costs = []
+            skin_sales_data = []
             # bot = base_command.bot
             with open("Data/skin_sales_data.json", 'r') as file:
                 dictionary = json.load(file)
             # iterate through dictionary and get list of skins on sale
             for entry in dictionary:
                 skin_name_rp_cost = " ".join(entry['skin_name_rp_cost'].split())
-                # skin_data = skin_name_rp_cost.split(' ')
-                # skin_name = skin_data[0: len(skin_data) - 3]
-                # skin_rp_cost = skin_data[len(skin_data) - 2: len(skin_data)]
-                sale_skins_name_rp_costs.append(skin_name_rp_cost)
+                skin_data = skin_name_rp_cost.split(' ')
+                skin_name = ' '.join(skin_data[0: len(skin_data) - 3])
+                skin_rp_cost = ' '.join(skin_data[len(skin_data) - 2: len(skin_data)])
+                skin_sales_data.append((skin_name, skin_rp_cost))
 
             # List of image URLs
             image_urls_file = open("Data/image_urls_list.txt", "r")
@@ -168,15 +168,14 @@ class BaseCommand(commands.Bot):
 
             # Init embed
             count = 0
-            embed = discord.Embed(color=0xffb6c1, title="Weekly Champion Skins Sale")
+            embed = discord.Embed(color=0xffb6c1, title="Champion Skin Sales")
             embed.add_field(
-                value="Shop refreshes every Monday at 3 pm EST",
-                name=sale_skins_name_rp_costs[count],
+                name=skin_sales_data[count][0],
+                value=skin_sales_data[count][1],
                 inline=False
             )
             embed.set_image(url=image_urls_list[count])
-            embed.set_footer(text=f"{count + 1}/{len(image_urls_list)}                 "
-                                  f"Shop refreshes every Monday at 3 pm EST")
+            embed.set_footer(text=f"{count + 1}/{len(image_urls_list)}\nShop refreshes every Monday at 3 pm EST")
             # Add reactions to embed message
             msg = await channel.send(embed=embed)
             msg_id = msg.id
@@ -187,8 +186,8 @@ class BaseCommand(commands.Bot):
 
             # Method to verify that the correct reactions were made
             def check(r, u):
-                return u == channel.author and str(r.emoji) in [left_arrow, right_arrow] \
-                       and r.message.id == msg_id
+                return str(r.emoji) in [left_arrow, right_arrow] \
+                       and r.message.id == msg_id and not u.bot
 
             # Reacting to the message will change the current skin displayed
             while True:
@@ -202,10 +201,11 @@ class BaseCommand(commands.Bot):
                     if str(reaction.emoji) == right_arrow:
                         count = count + 1 if count < 14 else 0
                     embed_dict = embed.to_dict()
-                    embed_dict['fields'][0]['name'] = sale_skins_name_rp_costs[count]
+                    embed_dict['fields'][0]['name'] = skin_sales_data[count][0]
+                    embed_dict['fields'][0]['value'] = skin_sales_data[count][1]
                     embed_dict['image']['url'] = image_urls_list[count]
-                    embed_dict['footer']['text'] = f"{count + 1}/{len(image_urls_list)}                 " \
-                                                   f"Shop refreshes every Monday at 3 pm EST"
+                    embed_dict['footer']['text'] = f"{count + 1}/{len(image_urls_list)}\nShop refreshes every Monday " \
+                                                   f"at 3 pm EST "
                     embed = discord.Embed.from_dict(embed_dict)
                     await msg.edit(embed=embed)
                 except (Exception,):
@@ -307,6 +307,7 @@ async def update_cache(self, user_id, game_info):
         self.cache[champ_game_tuple] = datetime.datetime.now()
         user = bot.get_user(user_id)
         await user.send(embed=get_embed_for_player(game_info))
+
 
 bot = BaseCommand()
 
