@@ -46,8 +46,6 @@ class BaseCommand(commands.Bot):
         # read API key for lolesports api
         with open('Data/api_key') as f:
             API_KEY = f.readline()
-        LOL_ESPORTS_LIVE_LINK = 'https://lolesports.com/live/'
-        API = Lolesports_API()
         WATCHER = LolWatcher(API_KEY)
         my_region = 'na1'
 
@@ -124,6 +122,7 @@ class BaseCommand(commands.Bot):
         @self.command(brief="Show Zoe matchup tips! (WIP)",
                       description="View Zoe's matchup statistics against a champion")
         async def matchup(channel, champion):
+            """WORK IN PROGRESS"""
             champion.lower()
             await channel.send(get_zoe_error_message())
 
@@ -136,6 +135,7 @@ class BaseCommand(commands.Bot):
         @self.command(brief="Paddle Star Damage Calculator (WIP)",
                       description="Zoe Q damage calculator based on items, runes, and masteries")
         async def psdc(channel):
+            """WORK IN PROGRESS"""
             await channel.send(get_zoe_error_message())
 
         @self.command(brief="Show the weekly free champion rotation",
