@@ -213,8 +213,8 @@ def get_live_match_id(games):
             return int(game['id'])
 
 
-# Given player_champ_tourney_etc info, returns an embed with all relevant information attache
-def get_embed_for_player(game_info):
+# Given player_champ_tourney_etc info, returns an embed with all relevant information attached
+def get_embed_for_player(game_info, pm=False):
     embed = discord.Embed(color=0x87cefa)
     player_info = game_info['player']
     player_name = player_info[0]
@@ -233,6 +233,10 @@ def get_embed_for_player(game_info):
         inline=False)
     embed.add_field(name="Watch live on LolEsports:", value=f"{url}", inline=False)
     embed.set_thumbnail(url=icon)
+    if pm:
+        embed.set_footer(text=f"**You are receiving this message because you opted to track this champion in League of "
+                              f"Legends professional play. To disable these messages from Zoe Bot, reply "
+                              f"with '~follow <champion_name>'**")
     return embed
 
 
@@ -390,4 +394,4 @@ async def update_cache(bot, user_id, game_info):
     if champ_game_tuple not in bot.cache:
         self.cache[champ_game_tuple] = datetime.datetime.now()
         user = bot.get_user(user_id)
-        await user.send(embed=get_embed_for_player(game_info))
+        await user.send(embed=get_embed_for_player(game_info, pm=True))

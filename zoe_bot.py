@@ -79,7 +79,7 @@ class BaseCommand(commands.Bot):
             await bot.change_presence(status=discord.Status.online, activity=activity)
             await check_tracked_skins(self)
             while True:
-                await check_tracked_champions(self)
+                # await check_tracked_champions(self)
                 await clear_cache(self.cache, cache_clear_hours)
                 await asyncio.sleep(check_tracked_mins)
                 # Run the skin sales webscraper every week and notify users about liked champions with skins on sale
@@ -93,12 +93,16 @@ class BaseCommand(commands.Bot):
 
         @self.command(hidden=True)
         @commands.is_owner()
-        async def update_skin_sales():
-            """WORK IN PROGRESS
-            Method to run the skin sales webscraper and notify users about their liked champs
+        async def update_skin_sales(channel, *args):
             """
-            os.system('python skin_sales_spider.py')
+            Method to run the skin sales webscraper AND notify users about their liked champs
+            """
+            args = ' '.join(args)
+            if args.lower() == 'spider':
+                os.system('python skin_sales_spider.py')
+                await channel.send("Successfully updated this week's champion skin sales.")
             await check_tracked_skins(self)
+            await channel.send("Successfully notified users about their favorite champions' skin sales.")
 
         @self.event
         async def on_guild_join(guild):
