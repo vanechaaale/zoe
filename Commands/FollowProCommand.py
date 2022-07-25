@@ -5,11 +5,17 @@ from constants import format_champion_name
 
 
 async def follow(message, base_command, *champion_name):
-    # format champion_name
+    # Save input
+    old_champion_name = champion_name
+    # Format given champ name
     champion_name = format_champion_name(' '.join(champion_name))
-    if not champion_name:
+    if not champion_name and not old_champion_name:
         await message.channel.send(
-            f"use '~follow <champion>' to be notified when a champion is being played in a professional match!")
+            "use '~follow <champion>' to be notified when a champion is being played in a professional match!")
+        return
+    elif not champion_name and old_champion_name:
+        await message.channel.send(
+            f"No champion with name '{' '.join(old_champion_name)}' was found.")
         return
     # Query champion user id list
     champion = Query()

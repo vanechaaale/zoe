@@ -5,11 +5,17 @@ from tinydb import Query
 
 
 async def favorite(message, base_command, *champion_name):
+    # Save input
+    old_champion_name = champion_name
     # format champion_name
     champion_name = format_champion_name(' '.join(champion_name))
-    if not champion_name:
+    if not champion_name and not old_champion_name:
         await message.channel.send(
-            f"use '~favorite <champion>' to be notified when that champion's skins go on sale!")
+            "use '~follow <champion>' to be notified when a champion is being played in a professional match!")
+        return
+    elif not champion_name and old_champion_name:
+        await message.channel.send(
+            f"No champion with name '{' '.join(old_champion_name)}' was found.")
         return
     # Query champion user id list
     champion = Query()
@@ -35,7 +41,7 @@ async def favorite(message, base_command, *champion_name):
 async def favlist(message, base_command):
     tracked_list = []
     user_id = message.author.id
-    user = message.author
+    # user = message.author
     for champ_name in base_command.champ_dict.values():
         champion = Query()
         skin_db = base_command.skin_db
