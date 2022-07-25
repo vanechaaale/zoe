@@ -1,11 +1,12 @@
 import asyncio
 import discord
 from tinydb import Query
+from constants import format_champion_name
 
 
 async def follow(message, base_command, *champion_name):
     # format champion_name
-    champion_name = base_command.format_champion_name(' '.join(champion_name))
+    champion_name = format_champion_name(' '.join(champion_name))
     if not champion_name:
         await message.channel.send(
             f"use '~follow <champion>' to be notified when a champion is being played in a professional match!")
@@ -44,6 +45,8 @@ async def following(message, base_command):
                 tracked_list.append(champ_name)
     if len(tracked_list) != 0:
         await message.channel.send(
-            f"Currently tracking professional matches for: {', '.join(tracked_list)}")
+            # f"Currently tracking professional matches for: {', '.join(tracked_list)}")
+            f"<@{user_id}> is currently following live professional games for: favorite champions: "
+            f"{', '.join(tracked_list)}")
     else:
         await message.channel.send(f"You are currently not tracking live games for any champion.")

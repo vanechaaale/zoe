@@ -146,8 +146,15 @@ class BaseCommand(commands.Bot):
         # I'm leaving this method without its own Command class because when i move it to its own file, image flipping
         # breaks lol
         @self.command(brief="Show champion skins on sale this week",
-                      description="Show list of all champion skins on sale, which refreshes every Monday at 3 pm EST")
-        async def sale(channel):
+                      description="Show list of all champion skins on sale (which refreshes every Monday at 3 pm EST),"
+                                  "or use '~sale all' to see a list of all skins on sale "
+                                  "(not recommended by yours truly, because I think it's quite ugly, but it's more "
+                                  "convenient I guess")
+        async def sale(channel, *kwargs):
+            command_args = ' '.join(kwargs)
+            if command_args.lower() == 'all':
+                await SaleCommand.sale(channel)
+                return
             skin_sales_data = []
             # bot = base_command.bot
             with open("Data/skin_sales_data.json", 'r') as file:
@@ -168,7 +175,7 @@ class BaseCommand(commands.Bot):
 
             # Init embed
             count = 0
-            embed = discord.Embed(color=0xffb6c1, title="Champion Skin Sales")
+            embed = discord.Embed(color=0xe8bffb, title="Champion Skin Sales")
             embed.add_field(
                 name=skin_sales_data[count][0],
                 value=skin_sales_data[count][1],
@@ -184,7 +191,7 @@ class BaseCommand(commands.Bot):
             await msg.add_reaction(left_arrow)
             await msg.add_reaction(right_arrow)
 
-            # Method to verify that the correct reactions were made
+            # Method to verify that either arrow reaction was made on the embedded message by a non-bot user
             def check(r, u):
                 return str(r.emoji) in [left_arrow, right_arrow] \
                        and r.message.id == msg_id and not u.bot
@@ -216,7 +223,7 @@ class BaseCommand(commands.Bot):
                                   "champion is being played, or use '~live all' to see a list of all champions in "
                                   "live games")
         async def live(channel, *champion_name):
-            await LiveCommand.live(channel, self, *champion_name)
+            await LiveCommand.live(channel, *champion_name)
 
         @self.command(brief="Get notified when a champion has a skin on sale",
                       description="Receive messages from Zoe Bot whenever the given champion has a skin on sale")

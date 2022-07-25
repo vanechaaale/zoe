@@ -46,6 +46,6 @@ async def favlist(message, base_command):
                 tracked_list.append(champ_name)
     if len(tracked_list) != 0:
         await message.channel.send(
-            f"{user.nick}'s favorite champions: {', '.join(tracked_list)}")
+            f"<@{user_id}>'s favorite champions: {', '.join(tracked_list)}")
     else:
         await message.channel.send(f"You have no favorite champions... (Other than Zoe obviously)")

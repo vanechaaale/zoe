@@ -6,8 +6,8 @@ import random
 from Data import Quotes
 
 
-async def sale(channel, base_command):
-    """THIS COMMAND IS CURRENTLY NOT IN USE"""
+async def test_sale(channel, base_command):
+    """THIS COMMAND IS CURRENTLY NOT IN USE, AS IT WAS MOSTLY USED FOR HELPING ME TEST THE 'NEW' SALES CMD"""
     sale_skins_name_rp_costs = []
     bot = base_command.bot
     with open("Data/skin_sales_data.json", 'r') as file:
@@ -57,3 +57,32 @@ async def sale(channel, base_command):
             await msg.edit(embed=embed)
         except (Exception,):
             pass
+
+
+async def sale(c):
+    """The original sale command for Zoe Bot, which showed the list of all champion skins on sale and an image collage
+    of all splash arts for skins that were on sale"""
+    sale_skins_name_rp_costs = []
+    embed = discord.Embed(title="Champion skins sale:",
+                          description="The shop resets every Monday at 3pm EST", color=0xe8bffb)
+    try:
+        with open("Data/skin_sales_data.json", 'r') as file:
+            dictionary = json.load(file)
+        # iterate through dictionary
+        for entry in dictionary:
+            skin_name_rp_cost = " ".join(entry['skin_name_rp_cost'].split())
+            skin_data = skin_name_rp_cost.split(' ')
+            skin_name = skin_data[0: len(skin_data) - 3]
+            skin_rp_cost = skin_data[len(skin_data) - 2: len(skin_data)]
+            embed.add_field(
+                name=f"{' '.join(skin_name)}",
+                value=' '.join(skin_rp_cost),
+                inline=True)
+            sale_skins_name_rp_costs.append(skin_name_rp_cost)
+        # skins_sale = '\n'.join(sale_skins_name_rp_costs)
+        # await c.channel.send("List of champion skins on sale this week: \n" + skins_sale)
+        image_file = discord.File('Data/full_skin_sales_image.jpg', filename='full_skin_sales_image.jpg')
+        embed.set_image(url='attachment://full_skin_sales_image.jpg')
+        await c.send(embed=embed, file=image_file)
+    except (Exception,):
+        await c.channel.send(random.choice(Quotes.Zoe_error_message))
