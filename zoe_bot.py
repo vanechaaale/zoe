@@ -13,8 +13,6 @@ import random
 import re
 import requests
 import shutil
-# runs the skin sales webscraper and automatically updates all the skins on sale in the league shop
-# import skin_sales_spider
 import threading
 import time
 from Commands import GuideCommand, LiveCommand, SaleCommand, FollowProCommand, FollowSkinCommand, WeeklyRotationCommand
@@ -31,6 +29,8 @@ from riotwatcher import LolWatcher
 from threading import Thread
 from tinydb import TinyDB, Query, where
 from urllib.request import Request, urlopen
+# runs the skin sales webscraper and automatically updates all the skins on sale in the league shop
+# import skin_sales_spider
 
 help_command = commands.DefaultHelpCommand(no_category='List of Zoe Bot Commands')
 intents = discord.Intents.default()
@@ -38,6 +38,10 @@ intents.members = True
 
 
 class BaseCommand(commands.Bot):
+    """The parent of all Zoe Bot Commands.
+    If I make the files in Commands/ extensions of this BaseCommand class, will it make multiple instances of the bot
+    to run the same command a bunch of times? Will it break everything? I have no idea
+    """
     def __init__(self):
         super().__init__(
             command_prefix='~',
@@ -129,7 +133,8 @@ class BaseCommand(commands.Bot):
         async def live(channel, *champion_name):
             await LiveCommand.live(channel, *champion_name)
 
-        @self.command(brief="Show Zoe matchup tips! (WIP)",
+        @self.command(hidden=True,
+                      brief="Show Zoe matchup tips! (WIP)",
                       description="View Zoe's matchup statistics against a champion")
         async def matchup(channel, champion):
             """WORK IN PROGRESS"""
@@ -142,7 +147,8 @@ class BaseCommand(commands.Bot):
                 await ctx.send(
                     "use '~matchup <champion>' to search for Zoe's matchup statistics against a champion!")
 
-        @self.command(brief="Paddle Star Damage Calculator (WIP)",
+        @self.command(hidden=True,
+                      brief="Paddle Star Damage Calculator (WIP)",
                       description="Zoe Q damage calculator based on items, runes, and masteries")
         async def psdc(channel):
             """WORK IN PROGRESS"""
@@ -153,7 +159,7 @@ class BaseCommand(commands.Bot):
         async def rotation(c):
             await WeeklyRotationCommand.rotation(c, self)
 
-        # I'm leaving this method without its own Command class because when i move it to its own file, image flipping
+        # I'm leaving this method without its own Command file because when i move it to its own file, image flipping
         # breaks lol
         @self.command(brief="Show champion skins on sale this week",
                       description="Show list of all champion skins on sale (which refreshes every Monday at 3 pm EST),"
