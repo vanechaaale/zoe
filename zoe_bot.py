@@ -232,7 +232,7 @@ class BaseCommand(commands.Bot):
                     embed = discord.Embed.from_dict(embed_dict)
                     await msg.edit(embed=embed)
                 except (Exception,):
-                    pass
+                    return
 
         @self.command(brief="Get notified when a champion has a skin on sale",
                       description="Receive messages from Zoe Bot whenever the given champion has a skin on sale")
