@@ -8,6 +8,7 @@ import requests
 import scrapy
 import shutil
 import sys
+from datetime import datetime
 from imageio import imread, imwrite
 from scrapy.crawler import CrawlerProcess
 from tinydb import TinyDB, Query, where
@@ -109,7 +110,7 @@ def main():
     #        np.hstack(images[12:15])
     full_image = np.vstack(rows)
     imwrite('Data/full_skin_sales_image.jpg', full_image)
+    print(f'Skin sales spider finished scraping at {datetime.now()}')
 
 
-if __name__ == "__main__":
-    main()
+main()

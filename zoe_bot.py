@@ -12,6 +12,8 @@ import random
 import re
 import requests
 import shutil
+# runs the skin sales webscraper and automatically updates all the skins on sale in the league shop
+import skin_sales_spider
 import threading
 import time
 from Commands import GuideCommand, LiveCommand, SaleCommand, FollowProCommand, FollowSkinCommand, WeeklyRotationCommand
@@ -42,7 +44,6 @@ class BaseCommand(commands.Bot):
             description="I'm Zoe, what's your name?",
             intents=intents
         )
-
         # read API key for lolesports api
         with open('Data/api_key') as f:
             API_KEY = f.readline()
@@ -84,6 +85,11 @@ class BaseCommand(commands.Bot):
         async def shutdown(c):
             await c.channel.send("Logging out...")
             await bot.close()
+
+        @self.command(hidden=True)
+        @commands.is_owner()
+        async def run_sales_spider():
+            """WORK IN PROGRESS"""
 
         @self.event
         async def on_guild_join(guild):
