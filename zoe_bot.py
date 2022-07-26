@@ -191,7 +191,7 @@ bot = BaseCommand()
 
 def main():
     # Start up the bot
-    with open('Data/alpha_token') as file:
+    with open('Data/live_token') as file:
         token = file.readline()
     bot.run(token)
 
