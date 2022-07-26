@@ -158,14 +158,16 @@ class BaseCommand(commands.Bot):
         @self.command(brief="Get notified when a champion has a skin on sale",
                       description="Receive messages from Zoe Bot whenever the given champion has a skin on sale. To "
                                   "stop receiving these notifications from Zoe Bot, use the command '~favorite "
-                                  "<champion_name>'.")
+                                  "<champion_name>', or use '~favorite <champion_name>, <champion_name> **...**' "
+                                  "for multiple champions.")
         async def favorite(message, *champion_name):
             await FollowSkinCommand.favorite(message, *champion_name)
 
         @self.command(brief="Show list of favorite champions",
                       description="Show a list of all champions that Zoe Bot will notify a Discord User for when one "
                                   "or more champs have skins on sale. Remove a champion from "
-                                  "this list with the command '~favorite <champion_name>'.")
+                                  "this list with the command '~favorite <champion_name>', or use '~favorite "
+                                  "<champion_name>, <champion_name> **...**' for multiple champions.")
         async def favlist(message):
             await FollowSkinCommand.favlist(message)
 
