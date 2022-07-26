@@ -25,15 +25,15 @@ async def favorite(message, *champion_name):
     if champ_name_user_ids_dict is None:
         user_ids_list.append(user_id)
         skin_db.insert({'champion_name': champion_name, 'user_ids': user_ids_list})
-        await message.channel.send(f"Now tracking skin sales for {champion_name}.")
+        await message.channel.send(f"Now checking skin sales for {champion_name}.")
     elif user_id not in user_ids_list:
         user_ids_list.append(user_id)
         skin_db.update({'user_ids': user_ids_list}, champion['champion_name'] == champion_name)
-        await message.channel.send(f"Now tracking skin sales for {champion_name}.")
+        await message.channel.send(f"Now checking skin sales for {champion_name}.")
     else:
         user_ids_list.remove(user_id)
         skin_db.update({'user_ids': user_ids_list}, champion['champion_name'] == champion_name)
-        await message.channel.send(f"No longer tracking skin sales for {champion_name}.")
+        await message.channel.send(f"No longer checking skin sales for {champion_name}.")
 
 
 async def favlist(message):
