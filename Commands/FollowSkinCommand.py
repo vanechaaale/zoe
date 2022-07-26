@@ -1,9 +1,9 @@
-from constants import format_champion_name
+from utilities import format_champion_name, Constants
 from tinydb import Query
 
 
-async def favorite(message, base_command, *champion_name):
-    # Save input
+async def favorite(message, *champion_name):
+    # Save original input
     old_champion_name = champion_name
     # format champion_name
     champion_name = format_champion_name(' '.join(champion_name))
@@ -18,7 +18,7 @@ async def favorite(message, base_command, *champion_name):
     # Query champion user id list
     champion = Query()
     user_id = message.author.id
-    skin_db = base_command.favorite_skin_db
+    skin_db = Constants.SKIN_DB
     champ_name_user_ids_dict = skin_db.get(champion['champion_name'] == champion_name)
     # I tried using a set but it broke whenever i called db.insert()
     user_ids_list = [] if champ_name_user_ids_dict is None else champ_name_user_ids_dict['user_ids']
@@ -36,13 +36,13 @@ async def favorite(message, base_command, *champion_name):
         await message.channel.send(f"No longer tracking skin sales for {champion_name}.")
 
 
-async def favlist(message, base_command):
+async def favlist(message):
     tracked_list = []
     user_id = message.author.id
     # user = message.author
-    for champ_name in base_command.champ_dict.values():
+    for champ_name in Constants.CHAMP_DICT.values():
         champion = Query()
-        skin_db = base_command.favorite_skin_db
+        skin_db = Constants.SKIN_DB
         query_results = skin_db.get(champion['champion_name'] == champ_name)
         if query_results is not None:
             user_ids_list = query_results['user_ids']

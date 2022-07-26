@@ -14,80 +14,98 @@ from tinydb import TinyDB, Query
 from Data import Quotes
 from lolesports_api import Lolesports_API
 
-# USING ALPHA DATABASES
-DB = TinyDB('Data/test_database.json')
-SKIN_DB = TinyDB('Data/test_skin_database.json')
 
-# read API key
-with open('Data/api_key') as f:
-    API_KEY = f.readline()
-LOL_ESPORTS_LIVE_LINK = 'https://lolesports.com/live/'
-API = Lolesports_API()
-WATCHER = LolWatcher(API_KEY)
-my_region = 'na1'
-FREE_CHAMPION_IDS = WATCHER.champion.rotations(my_region)
-
-# check league's latest patch version
-latest = WATCHER.data_dragon.versions_for_region(my_region)['n']['champion']
-# get some champions static information
-static_champ_list = WATCHER.data_dragon.champions(latest, False, 'en_US')
-CHAMP_DICT = {}
-for key in static_champ_list['data']:
-    row = static_champ_list['data'][key]
-    name = row['name']
-    CHAMP_DICT[row['key']] = name
-
-SPECIAL_CHAMPION_NAME_MATCHES_DICT = {
-    "Renata": "Renata Glasc",
-    "Glasc": "Renata Glasc",
-    "Jarvan": "Jarvan IV",
-    "JarvanIV": "Jarvan IV",
-    "Aurelion": "Aurelion Sol",
-    "Lee": "Lee Sin",
-    "Yi": "Master Yi",
-    "Nunu": "Nunu & Willump",
-    "Tahm": "Tahm Kench",
-    "TF": "Twisted Fate",
-    "MonkeyKing": "Wukong",
-    "Monkey King": "Wukong",
-    "Asol": "Aurelion Sol",
-    "Powder": "Jinx",
-    "Violet": "Vi",
-    "The Aspect of Twilight": "Zoe",
-    "TK": "Tahm Kench",
-    "Ali": "Alistar",
-    "Mundo": "Dr. Mundo",
-    "Kaisa": "Kai'Sa",
-    "Khazix": "Kha'Zix",
-    "MF": "Miss Fortune",
-    "Reksai": "Rek'Sai",
-    "Velkoz": "Vel'koz",
-    "Xin": "Xin Zhao",
-}
+def get_lol_watcher():
+    # read API key
+    with open('Data/api_key') as file:
+        api_key = file.readline()
+    return LolWatcher(api_key)
 
 
-async def sendDm(user_id, message):
-    user = await client.fetch_user(user_id)
-    await user.send(message)
+def get_lolesports_api():
+    return Lolesports_API()
 
 
-# Does the str start with '~'?
-def is_command(message):
-    return message.content[0] == '~'
+class Constants:
+    REGION = 'na1'
+    # Using Alpha DBs
+    DB = TinyDB('Data/test_database.json')
+    SKIN_DB = TinyDB('Data/test_skin_database.json')
+    LOL_ESPORTS_LIVE_LINK = 'https://lolesports.com/live/'
+
+    SPECIAL_CHAMPION_NAME_MATCHES_DICT = {
+        "Renata": "Renata Glasc",
+        "Glasc": "Renata Glasc",
+        "Jarvan": "Jarvan IV",
+        "JarvanIV": "Jarvan IV",
+        "Aurelion": "Aurelion Sol",
+        "Lee": "Lee Sin",
+        "Yi": "Master Yi",
+        "Nunu": "Nunu & Willump",
+        "Tahm": "Tahm Kench",
+        "TF": "Twisted Fate",
+        "MonkeyKing": "Wukong",
+        "Monkey King": "Wukong",
+        "Asol": "Aurelion Sol",
+        "Powder": "Jinx",
+        "Violet": "Vi",
+        "The Aspect of Twilight": "Zoe",
+        "TK": "Tahm Kench",
+        "Ali": "Alistar",
+        "Mundo": "Dr. Mundo",
+        "Kaisa": "Kai'Sa",
+        "Khazix": "Kha'Zix",
+        "MF": "Miss Fortune",
+        "Reksai": "Rek'Sai",
+        "Velkoz": "Vel'koz",
+        "Xin": "Xin Zhao",
+    }
+
+    # Class Constants: CHAMP_DICT, CHAMP_SKINS_DICT
+    CHAMP_DICT = dict()
+
+    @classmethod
+    def get_champ_dict(cls, refresh_cache=False):
+        """
+        Returns and sets CHAMP_DICT['id'] -> 'champion_name'
+        """
+        if refresh_cache or not cls.CHAMP_DICT:
+            watcher = get_lol_watcher()
+            # check league's latest patch version
+            latest = watcher.data_dragon.versions_for_region(Constants.REGION)['n']['champion']
+            champ_list = watcher.data_dragon.champions(latest, False, 'en_US')
+            champ_dict = {}
+            for key in champ_list['data']:
+                row = champ_list['data'][key]
+                name = row['name']
+                champ_dict[row['key']] = name
+            cls.CHAMP_DICT = champ_dict
+        return cls.CHAMP_DICT
+
+    CHAMP_SKINS_DICT = dict()
+
+    @classmethod
+    def get_champion_skins_dict(cls):
+        with open('Data/all_champion_skins.txt') as file:
+            data = file.read()
+            cls.CHAMP_SKINS_DICT = ast.literal_eval(data)
+            return cls.CHAMP_SKINS_DICT
+
+    FREE_CHAMPION_IDS = get_lol_watcher().champion.rotations(REGION)
 
 
-async def clear_cache(cache, h):
-    present = datetime.datetime.now()
-    if cache:
-        for key in list(cache.keys()):
-            value = cache[key]
-            delta = (present - value).total_seconds()
-            if delta > h * 3600:
-                cache.pop(key)
+#
+# async def sendDm(user_id, message):
+#     user = await client.fetch_user(user_id)
+#     await user.send(message)
 
-
-# Initialize CHAMP_SKINS_DICT: Dict['champion'] -> {Set of champ's skins by name}
-def get_champion_skins_set(champ_dict):
+def init_champion_skins_dict():
+    """
+    Initialize CHAMP_SKINS_DICT: Dict['champion'] -> {Set of champ's skins by name}
+    Should be called every new patch
+    """
+    watcher = get_lol_watcher()
+    latest = watcher.data_dragon.versions_for_region(Constants.REGION)['n']['champion']
     champ_skins_dict = dict()
     API_URL_NAME_MATCHES = {
         "Jarvan IV": "JarvanIV",
@@ -98,7 +116,7 @@ def get_champion_skins_set(champ_dict):
         "Rek'Sai": "RekSai",
         "Renata Glasc": "Renata",
     }
-    for champion in champ_dict.values():
+    for champion in Constants.get_champion_skins_dict().values():
         # Special Case names
         if champion in API_URL_NAME_MATCHES.keys():
             url_champion = API_URL_NAME_MATCHES[champion]
@@ -126,10 +144,19 @@ def get_champion_skins_set(champ_dict):
     return champ_skins_dict
 
 
-# CHAMP_SKINS_DICT = get_champion_skins_set(CHAMP_DICT)
-with open('Data/all_champion_skins.txt') as f:
-    data = f.read()
-    CHAMP_SKINS_DICT = ast.literal_eval(data)
+# Does the str start with '~'?
+def is_command(message):
+    return message.content[0] == '~'
+
+
+async def clear_cache(cache, h):
+    present = datetime.datetime.now()
+    if cache:
+        for k in list(cache.keys()):
+            value = cache[k]
+            delta = (present - value).total_seconds()
+            if delta > h * 3600:
+                cache.pop(k)
 
 
 async def check_tracked_skins(bot):
@@ -143,8 +170,8 @@ async def check_tracked_skins(bot):
             skin_data = skin_name_rp_cost.split(' ')
             skin_name = ' '.join(skin_data[0: len(skin_data) - 3])
             skin_rp_cost = ' '.join(skin_data[len(skin_data) - 2: len(skin_data)])
-            for champ_name in CHAMP_DICT.values():
-                if skin_name in CHAMP_SKINS_DICT[champ_name]:
+            for champ_name in Constants.CHAMP_DICT.values():
+                if skin_name in Constants.CHAMP_SKINS_DICT[champ_name]:
                     champion = Query()
                     query_results = favorite_skin_db.get(champion['champion_name'] == champ_name)
                     if query_results is not None:
@@ -159,14 +186,14 @@ async def check_tracked_skins(bot):
 
 
 def check_for_special_name_match(champion_name):
-    for special_name, official_name in SPECIAL_CHAMPION_NAME_MATCHES_DICT.items():
+    for special_name, official_name in Constants.SPECIAL_CHAMPION_NAME_MATCHES_DICT.items():
         if fuzz.ratio(special_name.lower(), champion_name.lower()) >= 80:
             return official_name
     return champion_name
 
 
 def get_fuzzy_match(champion_name):
-    for champ in CHAMP_DICT.values():
+    for champ in Constants.CHAMP_DICT.values():
         if fuzz.token_sort_ratio(champ, champion_name) >= 80:
             return champ
     return ''
@@ -185,7 +212,8 @@ def format_champion_name(champion_name):
 
 # Return data for all live pro play games
 def get_all_live_matches():
-    live_matches = API.get_live()
+    api = get_lolesports_api()
+    live_matches = api.get_live()
     matches = live_matches['schedule']['events']
     return matches
 
@@ -224,7 +252,7 @@ def get_embed_for_player(game_info, pm=False):
     player_name = player_info[0]
     player_champ_name_and_role = f'{player_info[1]} {player_info[2]}'
     tournament_name = player_info[3]
-    url = LOL_ESPORTS_LIVE_LINK + player_info[4]
+    url = Constants.LOL_ESPORTS_LIVE_LINK + player_info[4]
     icon = player_info[5]
     block_name = player_info[6]
     enemy_info = game_info['enemy']
@@ -267,10 +295,11 @@ def get_champs_on_team(team):
 
 # Gather game data for a live game in a match
 def get_live_game_data(live_match):
+    api = get_lolesports_api()
     game_id = get_live_match_id(live_match['match']['games'])
     if game_id is not None:
         try:
-            return API.get_window(game_id, "")
+            return api.get_window(game_id, "")
         # JSONDecodeError occurs if game is unstarted
         except JSONDecodeError:
             pass
@@ -381,7 +410,7 @@ async def check_tracked_champions(bot):
     """Every minute, checks all live champions and their db of subscribed users to message the users about a game
     where the champion is being played, then updates the cache if the user has not already been messaged
     """
-    db = DB
+    db = Constants.DB
     all_live_champs = get_all_live_champs()
     champion = Query()
     for champ in all_live_champs:

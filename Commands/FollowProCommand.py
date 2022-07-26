@@ -1,8 +1,8 @@
 from tinydb import Query
-from constants import format_champion_name
+from utilities import format_champion_name, Constants
 
 
-async def follow(message, base_command, *champion_name):
+async def follow(message, *champion_name):
     # Save input
     old_champion_name = champion_name
     # Format given champ name
@@ -17,7 +17,7 @@ async def follow(message, base_command, *champion_name):
         return
     # Query champion user id list
     champion = Query()
-    db = base_command.db
+    db = Constants.DB
     user_id = message.author.id
     champ_name_user_ids_dict = db.get(champion['champion_name'] == champion_name)
     # I tried using a set but it broke whenever i called db.insert()
@@ -36,12 +36,12 @@ async def follow(message, base_command, *champion_name):
         await message.channel.send(f"No longer following live professional games for {champion_name}.")
 
 
-async def following(message, base_command):
+async def following(message):
     tracked_list = []
     user_id = message.author.id
-    for champ_name in base_command.champ_dict.values():
+    for champ_name in Constants.CHAMP_DICT.values():
         champion = Query()
-        db = base_command.db
+        db = Constants.DB
         query_results = db.get(champion['champion_name'] == champ_name)
         if query_results is not None:
             user_ids_list = query_results['user_ids']

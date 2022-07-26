@@ -2,10 +2,9 @@ import asyncio
 import os
 
 import BaseMessageResponse
-import constants
 from Commands import GuideCommand, LiveCommand, SaleCommand, FollowProCommand, FollowSkinCommand, WeeklyRotationCommand
 from Data import gifs
-from constants import *
+from utilities import *
 from discord.ext import commands
 # runs the skin sales webscraper and automatically updates all the skins on sale in the league shop
 # import skin_sales_spider
@@ -27,17 +26,17 @@ class BaseCommand(commands.Bot):
             description="I'm Zoe, what's your name?",
             intents=intents
         )
-        self.champ_dict = constants.CHAMP_DICT
-        self.champ_skins_set = constants.CHAMP_SKINS_DICT
+        self.champ_dict = Constants.get_champ_dict()
+        self.champ_skins_set = Constants.get_champion_skins_dict()
         self.cache = dict()
         self.bot = commands.Bot(
             command_prefix='~',
             help_command=help_command,
             description="I'm Zoe, what's your name?",
             intents=intents)
-        self.db = constants.DB
-        self.favorite_skin_db = constants.SKIN_DB
-        self.free_champ_ids = constants.FREE_CHAMPION_IDS
+        self.db = Constants.DB
+        self.favorite_skin_db = Constants.SKIN_DB
+        self.free_champ_ids = Constants.FREE_CHAMPION_IDS
 
         @self.event
         async def on_ready():
@@ -135,8 +134,8 @@ class BaseCommand(commands.Bot):
 
         @self.command(brief="Show the weekly free champion rotation",
                       description="Weekly free to play champion rotation for summoner level 11+ accounts")
-        async def rotation(c):
-            await WeeklyRotationCommand.rotation(c, self)
+        async def rotation(message):
+            await WeeklyRotationCommand.rotation(message)
 
         # I'm leaving this method without its own Command file because when i move it to its own file, image flipping
         # breaks lol
@@ -222,7 +221,7 @@ class BaseCommand(commands.Bot):
                                   "or more champs have skins on sale. Remove a champion from "
                                   "this list with the command '~favorite <champion_name>'.")
         async def favlist(message):
-            await FollowSkinCommand.favlist(message, self)
+            await FollowSkinCommand.favlist(message)
 
         @self.command(brief="Follow a champion in professional play",
                       description="Receive messages from Zoe Bot whenever the given champion is being played in a "
@@ -236,7 +235,7 @@ class BaseCommand(commands.Bot):
                                   "or more champs are being played in a professional game. Remove a champion from "
                                   "this list with the command '~track <champion_name>'.")
         async def following(message):
-            await FollowProCommand.following(message, self)
+            await FollowProCommand.following(message)
 
         @self.command(hidden=True)
         async def test(channel):
