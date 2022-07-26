@@ -1,11 +1,13 @@
 import asyncio
 import os
 
+from discord.ext import commands
+
 import BaseMessageResponse
 from Commands import GuideCommand, LiveCommand, SaleCommand, FollowProCommand, FollowSkinCommand, WeeklyRotationCommand
 from Data import gifs
 from utilities import *
-from discord.ext import commands
+
 # runs the skin sales webscraper and automatically updates all the skins on sale in the league shop
 # import skin_sales_spider
 
@@ -19,6 +21,7 @@ class BaseCommand(commands.Bot):
     If I make the files in Commands/ extensions of this BaseCommand class, will it make multiple instances of the bot
     to run the same command a bunch of times? Will it break everything? I have no idea
     """
+
     def __init__(self):
         super().__init__(
             command_prefix='~',
