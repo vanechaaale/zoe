@@ -139,7 +139,7 @@ def init_champion_skins_dict():
             for skin in list_of_champ_skins:
                 curr_champ_skins.add(skin['name'])
         champ_skins_dict[champion] = curr_champ_skins
-    # Write the dictionary to a json file so that I don't have to run this every time i start up the bot
+    # Write the dictionary to a txt file so that I don't have to run this every time i start up the bot
     with open('Data/all_champion_skins.txt', 'w') as file:
         file.write(str(champ_skins_dict))
     return champ_skins_dict
