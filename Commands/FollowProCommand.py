@@ -49,8 +49,7 @@ async def following(message):
                 tracked_list.append(champ_name)
     if len(tracked_list) != 0:
         await message.channel.send(
-            # f"Currently tracking professional matches for: {', '.join(tracked_list)}")
-            f"<@{user_id}> is currently following pro play for: "
+            f"<@{user_id}> is currently following professional games for: "
             f"{', '.join(tracked_list)}")
     else:
-        await message.channel.send(f"You are currently not tracking live games for any champion.")
+        await message.channel.send(f"<@{user_id}> is currently not following professional games for any champions!")

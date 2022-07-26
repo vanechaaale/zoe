@@ -53,7 +53,6 @@ async def favorite(message, *champion_name):
 async def favlist(message):
     tracked_list = []
     user_id = message.author.id
-    # user = message.author
     for champ_name in Constants.CHAMP_DICT.values():
         champion = Query()
         skin_db = Constants.SKIN_DB
@@ -66,4 +65,4 @@ async def favlist(message):
         await message.channel.send(
             f"<@{user_id}>'s favorite champions: {', '.join(tracked_list)}")
     else:
-        await message.channel.send(f"You have no favorite champions... (Other than Zoe obviously)")
+        await message.channel.send(f"<@{user_id}> has no favorite champions... (Other than Zoe obviously)")

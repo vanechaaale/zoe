@@ -5,7 +5,8 @@ from discord.ext import commands
 
 import BaseMessageResponse
 import utilities
-from Commands import GuideCommand, LiveCommand, SaleCommand, FollowProCommand, FollowSkinCommand, WeeklyRotationCommand
+from Commands import GuideCommand, LiveCommand, SaleCommand, FollowProCommand, FollowSkinCommand, WeeklyRotationCommand, \
+    ClearCommand
 from Data import gifs
 from utilities import *
 
@@ -185,9 +186,11 @@ class BaseCommand(commands.Bot):
         async def following(message):
             await FollowProCommand.following(message)
 
-        @self.command(hidden=True)
-        async def test(channel):
-            await SaleCommand.sale_all(channel)
+        @self.command(brief="Clear list of followed/favorite champions",
+                      description="Clear your list of champions followed in professional play with '~clear pro', or "
+                                  "clear your list of favorite champions with '~clear fav'.")
+        async def clear(channel, *args):
+            await ClearCommand.clear(channel, *args)
 
 
 bot = BaseCommand()
