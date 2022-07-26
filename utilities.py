@@ -187,14 +187,14 @@ async def check_tracked_skins(bot):
 
 def check_for_special_name_match(champion_name):
     for special_name, official_name in Constants.SPECIAL_CHAMPION_NAME_MATCHES_DICT.items():
-        if fuzz.ratio(special_name.lower(), champion_name.lower()) >= 80:
+        if fuzz.ratio(special_name.lower(), champion_name.lower()) >= 90:
             return official_name
     return champion_name
 
 
 def get_fuzzy_match(champion_name):
     for champ in Constants.CHAMP_DICT.values():
-        if fuzz.token_sort_ratio(champ, champion_name) >= 80:
+        if fuzz.token_sort_ratio(champ, champion_name) >= 90:
             return champ
     return ''
 
