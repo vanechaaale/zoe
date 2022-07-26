@@ -4,6 +4,7 @@ import os
 from discord.ext import commands
 
 import BaseMessageResponse
+import utilities
 from Commands import GuideCommand, LiveCommand, SaleCommand, FollowProCommand, FollowSkinCommand, WeeklyRotationCommand
 from Data import gifs
 from utilities import *
@@ -30,7 +31,8 @@ class BaseCommand(commands.Bot):
             intents=intents
         )
         self.champ_dict = Constants.get_champ_dict()
-        self.champ_skins_set = Constants.get_champion_skins_dict()
+        # self.champ_skins_set = Constants.get_champion_skins_dict()
+        self.champ_skins_set = utilities.init_champion_skins_dict()
         self.cache = dict()
         self.bot = commands.Bot(
             command_prefix='~',

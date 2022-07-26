@@ -61,6 +61,16 @@ class Constants:
         "Xin": "Xin Zhao",
     }
 
+    API_URL_NAME_MATCHES = {
+        "Jarvan IV": "JarvanIV",
+        "Nunu & Willump": "Nunu",
+        "Kog\'Maw": "KogMaw",
+        "LeBlanc": "Leblanc",
+        "Wukong": "MonkeyKing",
+        "Rek'Sai": "RekSai",
+        "Renata Glasc": "Renata",
+    }
+
     # Class Constants: CHAMP_DICT, CHAMP_SKINS_DICT
     CHAMP_DICT = dict()
 
@@ -94,10 +104,10 @@ class Constants:
     FREE_CHAMPION_IDS = get_lol_watcher().champion.rotations(REGION)
 
 
-#
-# async def sendDm(user_id, message):
-#     user = await client.fetch_user(user_id)
-#     await user.send(message)
+async def sendDm(bot, user_id, message):
+    user = await bot.get_user(user_id)
+    await user.send(message)
+
 
 def init_champion_skins_dict():
     """
@@ -107,19 +117,10 @@ def init_champion_skins_dict():
     watcher = get_lol_watcher()
     latest = watcher.data_dragon.versions_for_region(Constants.REGION)['n']['champion']
     champ_skins_dict = dict()
-    API_URL_NAME_MATCHES = {
-        "Jarvan IV": "JarvanIV",
-        "Nunu & Willump": "Nunu",
-        "Kog\'Maw": "KogMaw",
-        "LeBlanc": "Leblanc",
-        "Wukong": "MonkeyKing",
-        "Rek'Sai": "RekSai",
-        "Renata Glasc": "Renata",
-    }
-    for champion in Constants.get_champion_skins_dict().values():
+    for champion in Constants.get_champion_skins_dict().keys():
         # Special Case names
-        if champion in API_URL_NAME_MATCHES.keys():
-            url_champion = API_URL_NAME_MATCHES[champion]
+        if champion in Constants.API_URL_NAME_MATCHES.keys():
+            url_champion = Constants.API_URL_NAME_MATCHES[champion]
         elif "'" in champion:
             # Account for Void champion names ('Kai'sa') formatting
             url_champion = champion.replace("'", '').lower().capitalize()
@@ -138,7 +139,7 @@ def init_champion_skins_dict():
             for skin in list_of_champ_skins:
                 curr_champ_skins.add(skin['name'])
         champ_skins_dict[champion] = curr_champ_skins
-    # Write the dictionary to a json file so that I don't have to run this every time i start up the bot
+    # Write the dictionary to a txt file so that I don't have to run this every time i start up the bot
     with open('Data/all_champion_skins.txt', 'w') as file:
         file.write(str(champ_skins_dict))
     return champ_skins_dict
