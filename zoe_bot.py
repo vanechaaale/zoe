@@ -105,9 +105,9 @@ class BaseCommand(commands.Bot):
             await channel.send(random.choice(gifs.gifs))
 
         @self.command(brief="Show live professional games of a champion",
-                      description="Given a champion's name, shows a list of all live professional games where the "
+                      description="Shows a list of all live professional games where the "
                                   "champion is being played, or use '~live all' to see a list of all champions in "
-                                  "live games")
+                                  "live games.")
         async def live(channel, *champion_name):
             await LiveCommand.live(channel, *champion_name)
 
@@ -151,7 +151,9 @@ class BaseCommand(commands.Bot):
                     await SaleCommand.sale(channel, self)
 
         @self.command(brief="Get notified when a champion has a skin on sale",
-                      description="Receive messages from Zoe Bot whenever the given champion has a skin on sale")
+                      description="Receive messages from Zoe Bot whenever the given champion has a skin on sale. To "
+                                  "stop receiving these notifications from Zoe Bot, use the command '~favorite "
+                                  "<champion_name>'.")
         async def favorite(message, *champion_name):
             await FollowSkinCommand.favorite(message, *champion_name)
 
@@ -164,15 +166,15 @@ class BaseCommand(commands.Bot):
 
         @self.command(brief="Follow a champion in professional play",
                       description="Receive messages from Zoe Bot whenever the given champion is being played in a "
-                                  "professional game, or use the command again to stop receiving notifications from "
-                                  "Zoe Bot.")
+                                  "professional game. To stop receiving these notifications from Zoe Bot, use the "
+                                  "command '~follow <champion_name>'.")
         async def follow(message, *champion_name):
             await FollowProCommand.follow(message, *champion_name)
 
         @self.command(brief="Show all followed champions",
                       description="Show a list of all champions that Zoe Bot will notify a Discord User for when one "
                                   "or more champs are being played in a professional game. Remove a champion from "
-                                  "this list with the command '~track <champion_name>'.")
+                                  "this list with the command '~follow <champion_name>'.")
         async def following(message):
             await FollowProCommand.following(message)
 
