@@ -153,7 +153,7 @@ class BaseCommand(commands.Bot):
         @self.command(brief="Get notified when a champion has a skin on sale",
                       description="Receive messages from Zoe Bot whenever the given champion has a skin on sale")
         async def favorite(message, *champion_name):
-            await FollowSkinCommand.favorite(message, self, *champion_name)
+            await FollowSkinCommand.favorite(message, *champion_name)
 
         @self.command(brief="Show list of favorite champions",
                       description="Show a list of all champions that Zoe Bot will notify a Discord User for when one "
@@ -167,7 +167,7 @@ class BaseCommand(commands.Bot):
                                   "professional game, or use the command again to stop receiving notifications from "
                                   "Zoe Bot.")
         async def follow(message, *champion_name):
-            await FollowProCommand.follow(message, self, *champion_name)
+            await FollowProCommand.follow(message, *champion_name)
 
         @self.command(brief="Show all followed champions",
                       description="Show a list of all champions that Zoe Bot will notify a Discord User for when one "
