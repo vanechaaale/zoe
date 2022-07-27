@@ -42,7 +42,6 @@ class Constants:
         "Lee": "Lee Sin",
         "Yi": "Master Yi",
         "Nunu": "Nunu & Willump",
-        "Tahm": "Tahm Kench",
         "TF": "Twisted Fate",
         "MonkeyKing": "Wukong",
         "Monkey King": "Wukong",
@@ -50,12 +49,17 @@ class Constants:
         "Powder": "Jinx",
         "Violet": "Vi",
         "The Aspect of Twilight": "Zoe",
+        "The First Twilight": "Zoe",
+        "Aspect of Change": "Zoe",
+        "The Everchild": "Zoe",
         "TK": "Tahm Kench",
+        "Tahm": "Tahm Kench",
         "Ali": "Alistar",
         "Mundo": "Dr. Mundo",
         "Kaisa": "Kai'Sa",
         "Khazix": "Kha'Zix",
         "MF": "Miss Fortune",
+        "Sarah": "Miss Fortune",
         "Reksai": "Rek'Sai",
         "Velkoz": "Vel'koz",
         "Xin": "Xin Zhao",
@@ -436,3 +440,61 @@ async def update_cache(bot, user_id, game_info):
         cache[champ_game_tuple] = datetime.datetime.now()
         user = bot.get_user(user_id)
         await user.send(embed=get_embed_for_player(game_info, pm=True))
+
+
+async def add_remove_favorite(message, champion_name, db, user_id, success_message):
+    """Utility method to add/remove champions from their list of favorites"""
+    added = set()
+    removed = set()
+    not_found = set()
+    # Format args
+    # "Alistar, Kai'sa, Lee Sin, Not a Champion" -> ["Alistar", "Kai'sa", "Lee Sin", None]
+    champ_names_list = ' '.join(champion_name).split(',')
+    for unformatted_name in champ_names_list:
+        champion_name = format_champion_name(unformatted_name)
+        if not champion_name:
+            not_found.add(unformatted_name)
+            continue
+        # Query db for formatted champ name
+        champion = Query()
+        champ_name_user_ids_dict = db.get(champion['champion_name'] == champion_name)
+        user_ids_list = [] if champ_name_user_ids_dict is None else champ_name_user_ids_dict['user_ids']
+        # Create DB and add user if it doesn't already exist
+        if champ_name_user_ids_dict is None:
+            user_ids_list.append(user_id)
+            db.insert({'champion_name': champion_name, 'user_ids': user_ids_list})
+            added.add(champion_name)
+        # DB exists but user is not in it
+        elif user_id not in user_ids_list:
+            user_ids_list.append(user_id)
+            db.update({'user_ids': user_ids_list}, champion['champion_name'] == champion_name)
+            added.add(champion_name)
+        else:
+            user_ids_list.remove(user_id)
+            db.update({'user_ids': user_ids_list}, champion['champion_name'] == champion_name)
+            removed.add(champion_name)
+    # NGL i have no idea if 'else None' is bad here
+    await message.channel.send(f"<@{user_id}> is now {success_message} {', '.join(added)}.") if added else None
+    await message.channel.send(
+        f"<@{user_id}> is no longer {success_message} {', '.join(removed)}.") if removed else None
+    await message.channel.send(
+        f"No champion with name(s): '{' '.join(not_found)}' found.") if not_found else None
+
+
+def get_following_list(user_id, db, success_message, second=False):
+    tracked_list = []
+    for champ_name in Constants.CHAMP_DICT.values():
+        champion = Query()
+        query_results = db.get(champion['champion_name'] == champ_name)
+        if query_results is not None:
+            user_ids_list = query_results['user_ids']
+            if user_id in user_ids_list:
+                tracked_list.append(champ_name)
+    if len(tracked_list) != 0:
+        # following skin sales for:
+        # following live professional games for:
+        return f"<@{user_id}> is {success_message} {', '.join(tracked_list)}" if not second \
+            else f"is {success_message} {', '.join(tracked_list)}"
+    else:
+        return f"<@{user_id}> is not {success_message} any champion... (Except for Zoe, obviously)" if not second \
+            else f"is not {success_message} any champion... (Except for Zoe, obviously)"

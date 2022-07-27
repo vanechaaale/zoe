@@ -1,45 +1,28 @@
-from utilities import format_champion_name, Constants
 from tinydb import Query
 
+import utilities
+from utilities import Constants
 
-async def favorite(message, *champion_name):
-    # Save original input
-    old_champion_name = champion_name
-    # format champion_name
-    champion_name = format_champion_name(' '.join(champion_name))
-    if not champion_name and not old_champion_name:
+
+async def follow_skin(message, *champion_name):
+    # If no args were given
+    if not champion_name:
         await message.channel.send(
-            "use '~favorite <champion>' to be notified when that champion's skins go on sale!")
+            "use '~favorite <champion>, <champion>, **...**' to be notified when their skins go on sale!")
         return
-    elif not champion_name and old_champion_name:
-        await message.channel.send(
-            f"No champion with name '{' '.join(old_champion_name)}' was found.")
-        return
-    # Query champion user id list
-    champion = Query()
-    user_id = message.author.id
-    skin_db = Constants.SKIN_DB
-    champ_name_user_ids_dict = skin_db.get(champion['champion_name'] == champion_name)
-    # I tried using a set but it broke whenever i called db.insert()
-    user_ids_list = [] if champ_name_user_ids_dict is None else champ_name_user_ids_dict['user_ids']
-    if champ_name_user_ids_dict is None:
-        user_ids_list.append(user_id)
-        skin_db.insert({'champion_name': champion_name, 'user_ids': user_ids_list})
-        await message.channel.send(f"Now tracking skin sales for {champion_name}.")
-    elif user_id not in user_ids_list:
-        user_ids_list.append(user_id)
-        skin_db.update({'user_ids': user_ids_list}, champion['champion_name'] == champion_name)
-        await message.channel.send(f"Now tracking skin sales for {champion_name}.")
     else:
-        user_ids_list.remove(user_id)
-        skin_db.update({'user_ids': user_ids_list}, champion['champion_name'] == champion_name)
-        await message.channel.send(f"No longer tracking skin sales for {champion_name}.")
+        await utilities.add_remove_favorite(
+            message=message,
+            champion_name=champion_name,
+            db=Constants.SKIN_DB,
+            user_id=message.author.id,
+            success_message="following weekly skin sales for:"
+        )
 
 
 async def favlist(message):
     tracked_list = []
     user_id = message.author.id
-    # user = message.author
     for champ_name in Constants.CHAMP_DICT.values():
         champion = Query()
         skin_db = Constants.SKIN_DB
@@ -52,4 +35,4 @@ async def favlist(message):
         await message.channel.send(
             f"<@{user_id}>'s favorite champions: {', '.join(tracked_list)}")
     else:
-        await message.channel.send(f"You have no favorite champions... (Other than Zoe obviously)")
+        await message.channel.send(f"<@{user_id}> has no favorite champions... (Other than Zoe obviously)")
