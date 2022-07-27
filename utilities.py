@@ -346,18 +346,22 @@ def get_player_info(role, team):
         r = player['role'].capitalize()
         if r == role:
             player_name = player['summonerName']
-            champion_name = check_for_special_name_match(re.sub(r"([A-Z])", r" \1", player['championId'])[1:])
+            player_champion = player['championId']
+            champion_name = check_for_special_name_match(re.sub(r"([A-Z])", r" \1", player_champion)[1:]) if \
+                player_champion != 'JarvanIV' else check_for_special_name_match('Jarvan')
             return [player_name, champion_name, role]
 
 
 # "Is {champion_name} on the given teams? -> Return player_champ_tourney_info
-def is_champion_on_team(team, champion_name):
+def is_champion_on_team(team, name_match):
     for player in team:
         # player['championId'] wont include spaces which breaks format_champion_name(), hence why it is not used
-        champion = check_for_special_name_match(re.sub(r"([A-Z])", r" \1", player['championId'])[1:])
-        role = player['role'].capitalize()
-        if champion.lower() == champion_name.lower():
-            return get_player_info(role, team)
+        player_champion = player['championId']
+        champion_name = check_for_special_name_match(re.sub(r"([A-Z])", r" \1", player_champion)[1:]) if \
+            player_champion != 'JarvanIV' else check_for_special_name_match('Jarvan')
+        if champion_name == name_match:
+            # Return player info once we find a result
+            return player['summonerName'], champion_name, player['role'].capitalize()
     return None
 
 
