@@ -13,12 +13,13 @@ async def clear(message, *args):
     if db_type == 'pro':
         db = Constants.DB
         success_message = f"Successfully cleared <@{user_id}>'s list of champions followed in professional games."
-    elif db_type == 'fav':
+    elif db_type == 'skin':
         db = Constants.SKIN_DB
-        success_message = f"Successfully cleared <@{user_id}>'s list of favorite champions."
+        success_message = f"Successfully cleared <@{user_id}>'s list of champions followed in weekly skin sales."
     else:
-        await message.channel.send("Use '~clear pro' to clear your list of champs followed in professional play, or"
-                                   "'~clear fav' to clear your list of favorite champs~")
+        await message.channel.send("Use **'~clear pro'** to clear your list of champions followed in professional"
+                                   " play, or **'~clear fav'** to clear your list of champions followed in the weekly"
+                                   "skin sales rotation.")
         return
     # Clear user's list of favorites/followed
     for champ_name in Constants.CHAMP_DICT.values():

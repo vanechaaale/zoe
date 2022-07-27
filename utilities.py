@@ -442,7 +442,7 @@ async def update_cache(bot, user_id, game_info):
         await user.send(embed=get_embed_for_player(game_info, pm=True))
 
 
-async def favorite_pro_skin(message, champion_name, db, user_id, success_message):
+async def add_remove_favorite(message, champion_name, db, user_id, success_message):
     """Utility method to add/remove champions from their list of favorites"""
     added = set()
     removed = set()
@@ -479,3 +479,22 @@ async def favorite_pro_skin(message, champion_name, db, user_id, success_message
         f"<@{user_id}> is no longer {success_message} {', '.join(removed)}.") if removed else None
     await message.channel.send(
         f"No champion with name(s): '{' '.join(not_found)}' found.") if not_found else None
+
+
+def get_following_list(user_id, db, success_message, second=False):
+    tracked_list = []
+    for champ_name in Constants.CHAMP_DICT.values():
+        champion = Query()
+        query_results = db.get(champion['champion_name'] == champ_name)
+        if query_results is not None:
+            user_ids_list = query_results['user_ids']
+            if user_id in user_ids_list:
+                tracked_list.append(champ_name)
+    if len(tracked_list) != 0:
+        # following skin sales for:
+        # following live professional games for:
+        return f"<@{user_id}> is {success_message} {', '.join(tracked_list)}" if not second \
+            else f"is {success_message} {', '.join(tracked_list)}"
+    else:
+        return f"<@{user_id}> is not {success_message} any champion... (Except for Zoe, obviously)" if not second \
+            else f"is not {success_message} any champion... (Except for Zoe, obviously)"

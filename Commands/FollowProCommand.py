@@ -4,7 +4,7 @@ import utilities
 from utilities import Constants
 
 
-async def follow(message, *champion_name):
+async def follow_pro(message, *champion_name):
     """Command to follow a champion's presence in pro play"""
     # If no args were given
     if not champion_name:
@@ -13,7 +13,7 @@ async def follow(message, *champion_name):
             "professional game!")
         return
     else:
-        await utilities.favorite_pro_skin(
+        await utilities.add_remove_favorite(
             message=message,
             champion_name=champion_name,
             db=Constants.DB,
@@ -23,19 +23,23 @@ async def follow(message, *champion_name):
 
 
 async def following(message):
-    tracked_list = []
+    """
+    Command to show the user the list of champions they follow in pro play, and the list of champions they
+    track weekly skin sales for.
+    """
     user_id = message.author.id
-    for champ_name in Constants.CHAMP_DICT.values():
-        champion = Query()
-        db = Constants.DB
-        query_results = db.get(champion['champion_name'] == champ_name)
-        if query_results is not None:
-            user_ids_list = query_results['user_ids']
-            if user_id in user_ids_list:
-                tracked_list.append(champ_name)
-    if len(tracked_list) != 0:
-        await message.channel.send(
-            f"<@{user_id}> is currently following professional games for: "
-            f"{', '.join(tracked_list)}")
-    else:
-        await message.channel.send(f"<@{user_id}> is currently not following professional games for any champions!")
+    # Following for pro play
+    pro_play_following = utilities.get_following_list(
+        user_id=user_id,
+        db=Constants.DB,
+        success_message="following live professional games for:"
+    )
+    skin_following = utilities.get_following_list(
+        user_id=user_id,
+        db=Constants.SKIN_DB,
+        success_message="following skin sales for:",
+        second=True
+    )
+    await message.channel.send(f"{pro_play_following}, and {skin_following}")
+
+
