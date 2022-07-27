@@ -6,7 +6,7 @@ import requests
 import scrapy
 import shutil
 from datetime import datetime
-from imageio import imread, imwrite
+from imageio.v2 import imread, imwrite
 from scrapy.crawler import CrawlerProcess
 
 
@@ -23,7 +23,7 @@ class SkinSalesSpider(scrapy.Spider):
         self.output_callback = kwargs.get('args').get('callback')
 
     # parse data from earlygame.com to get all skins on sale and their current RP cost
-    def parse(self, response):
+    def parse(self, response, **kwargs):
         skin_name_rp_costs = response.xpath(
             '//div/div/div[3]/div[1]/div[1]/div[1]/figure/figcaption/h2/text()').getall()
         images = response.xpath('//div/div/div[3]/div[1]/div[1]/div[1]/figure/picture/img').getall()
@@ -36,7 +36,7 @@ class SkinSalesSpider(scrapy.Spider):
         with open('Data/skin_sales_data.json', 'w') as outfile:
             outfile.write(json_data)
 
-    def close(self):
+    def close(self, **kwargs):
         self.output_callback(self.data)
 
     # def run_spider(self):
