@@ -2,6 +2,7 @@ import asyncio
 import os
 
 from discord.ext import commands
+from dotenv import load_dotenv
 
 import BaseMessageResponse
 from Commands import GuideCommand, LiveCommand, SaleCommand, FollowProCommand, FollowSkinCommand, \
@@ -199,6 +200,9 @@ class BaseCommand(commands.Bot):
 
 bot = BaseCommand()
 
-with open('Data/live_token') as file:
-    token = file.readline()
+# with open('Data/live_token') as file:
+#     token = file.readline()
+#     
+load_dotenv()
+token = os.getenv('TOKEN')
 bot.run(token)
