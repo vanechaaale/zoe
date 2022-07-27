@@ -10,7 +10,7 @@ async def live(channel, *champion_name):
         original_message = ' '.join(champion_name)
         if not champion_name:
             await channel.send(
-                "use '~live <champion>' to search for a champion in a live professional game!")
+                "use **'~live <champion>'** to search for a champion in a live professional game!")
             return
         if original_message.lower() == "all":
             await pro_all(channel)

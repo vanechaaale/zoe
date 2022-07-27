@@ -102,13 +102,53 @@ class BaseCommand(commands.Bot):
                 quote = random.choice(Quotes.Greet)
                 await message.channel.send(f'"*{quote}*"')
 
-        @self.command(brief="Show Zoe guides", description="List of Zoe guides and Zoe players!")
-        async def guide(channel):
-            await GuideCommand.guide(channel)
+        @self.command(brief="Clear list of followed champions",
+                      description="Clear your list of champions followed in professional play with '~clear pro', or "
+                                  "clear your list of champions followed for weekly skin sales with '~clear fav'.")
+        async def clear(channel, *args):
+            await ClearCommand.clear(channel, *args)
+
+        @self.command(brief="Follow champions in pro play, or watch for their skin sales",
+                      description="Receive messages from Zoe Bot whenever a followed champion is played in a live "
+                                  "professional match or when a champion's skin is on sale in the weekly shop "
+                                  "rotation. Use the command again to stop receiving these "
+                                  "notifications from Zoe Bot.")
+        async def follow(message, *champion_name):
+            cmd_name = follow.name
+            error_message = f"Use **'~{cmd_name} pro <champion>, <champion> ...'** to follow champions in" \
+                            f" professional play, or use **'~{cmd_name} skin <champion>, <champion> ...'** to follow " \
+                            f"weekly skin sales for champions!"
+            if not champion_name:
+                await message.channel.send(error_message)
+                return
+            else:
+                mode = champion_name[0].lower()
+                champs_str = ' '.join(champion_name[1:])
+                if mode == 'pro':
+                    await FollowProCommand.follow_pro(message, champs_str) if champs_str else \
+                        await message.channel.send(error_message)
+                elif mode == 'skin':
+                    await FollowSkinCommand.follow_skin(message, champs_str) if champs_str else \
+                        await message.channel.send(error_message)
+                else:
+                    await message.channel.send(error_message)
+
+        @self.command(brief="Show list of favorite champions",
+                      description="Show a list of all champions that Zoe Bot will notify a Discord User for when one "
+                                  "or more champions are being played in a professional game, or if a champion has a "
+                                  "skin on sale this week. Remove a champion from this list with the command "
+                                  "'~favorite pro <champion>, <champion> ...' for professional play, or use "
+                                  "'~favorite skin <champion>, <champion> ...' for champion skins.")
+        async def following(message):
+            await FollowProCommand.following(message)
 
         @self.command(brief="Zoe gifs.", description="Beautiful Zoe gifs.")
         async def gif(channel):
             await channel.send(random.choice(gifs.gifs))
+
+        @self.command(brief="Show Zoe guides", description="List of Zoe guides and Zoe players!")
+        async def guide(channel):
+            await GuideCommand.guide(channel)
 
         @self.command(brief="Show live professional games of a champion",
                       description="Shows a list of all live professional games where the "
@@ -155,46 +195,6 @@ class BaseCommand(commands.Bot):
                     await SaleCommand.sale_all(channel)
                 else:
                     await SaleCommand.sale(channel, self)
-
-        @self.command(brief="Follow champions in pro play, or watch for their skin sales",
-                      description="Receive messages from Zoe Bot whenever a followed champion is played in a live "
-                                  "professional match or when a champion's skin is on sale in the weekly shop "
-                                  "rotation. Use the command again to stop receiving these "
-                                  "notifications from Zoe Bot.")
-        async def follow(message, *champion_name):
-            cmd_name = follow.name
-            error_message = f"Use **'~{cmd_name} pro <champion>, <champion> ...'** to follow champions in" \
-                            f" professional play, or use **'~{cmd_name} skin <champion>, <champion> ...'** to follow " \
-                            f"weekly skin sales for champions!"
-            if not champion_name:
-                await message.channel.send(error_message)
-                return
-            else:
-                mode = champion_name[0].lower()
-                champs_str = ' '.join(champion_name[1:])
-                if mode == 'pro':
-                    await FollowProCommand.follow_pro(message, champs_str) if champs_str else \
-                        await message.channel.send(error_message)
-                elif mode == 'skin':
-                    await FollowSkinCommand.follow_skin(message, champs_str) if champs_str else \
-                        await message.channel.send(error_message)
-                else:
-                    await message.channel.send(error_message)
-
-        @self.command(brief="Show list of favorite champions",
-                      description="Show a list of all champions that Zoe Bot will notify a Discord User for when one "
-                                  "or more champions are being played in a professional game, or if a champion has a "
-                                  "skin on sale this week. Remove a champion from this list with the command "
-                                  "'~favorite pro <champion>, <champion> ...' for professional play, or use "
-                                  "'~favorite skin <champion>, <champion> ...' for champion skins.")
-        async def following(message):
-            await FollowProCommand.following(message)
-
-        @self.command(brief="Clear list of followed champions",
-                      description="Clear your list of champions followed in professional play with '~clear pro', or "
-                                  "clear your list of champions followed for weekly skin sales with '~clear fav'.")
-        async def clear(channel, *args):
-            await ClearCommand.clear(channel, *args)
 
 
 bot = BaseCommand()
