@@ -7,3 +7,4 @@ numpy~=1.22.3
 Scrapy~=2.6.1
 imageio~=2.17.0
 discord~=1.7.3
+discord.py
