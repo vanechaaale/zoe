@@ -156,33 +156,42 @@ class BaseCommand(commands.Bot):
                 else:
                     await SaleCommand.sale(channel, self)
 
-        @self.command(brief="Get notified when a champion has a skin on sale",
-                      description="Receive messages from Zoe Bot whenever the given champion has a skin on sale. To "
-                                  "stop receiving these notifications from Zoe Bot, use the command '~favorite "
-                                  "<champion_name>', or use '~favorite <champion_name>, <champion_name> **...**' "
-                                  "for multiple champions.")
+        @self.command(brief="Receive notifications for a champion in professional play, or when their skins go on sale",
+                      description="Receive messages from Zoe Bot whenever a favorite champion is played in a live "
+                                  "professional match with **'~favorite pro <champion>, <champion> ...'**, or when a "
+                                  "champion's skin is on sale in the weekly shop rotation with **'~favorite skin "
+                                  "<champion>, <champion> ...'**. Use the command again to stop receiving these "
+                                  "notifications from Zoe Bot.")
         async def favorite(message, *champion_name):
-            await FollowSkinCommand.favorite(message, *champion_name)
+            mode = champion_name[0].lower()
+            if mode == 'pro':
+                await FollowProCommand.follow(message, ' '.join(champion_name[1:]))
+            elif mode == 'skin':
+                await FollowSkinCommand.favorite(message, ' '.join(champion_name[1:]))
+            else:
+                await message.channel.send("Use **'~favorite pro <champion>, <champion> ...'** to follow "
+                                           "champions in professional play, or use **'~favorite skin <champion>, "
+                                           "<champion> ...'** to follow weekly skin sales for champions!")
 
         @self.command(brief="Show list of favorite champions",
                       description="Show a list of all champions that Zoe Bot will notify a Discord User for when one "
                                   "or more champs have skins on sale. Remove a champion from "
-                                  "this list with the command '~favorite <champion_name>', or use '~favorite "
-                                  "<champion_name>, <champion_name> **...**' for multiple champions.")
+                                  "this list with the command '~favorite <champion>', or use '~favorite "
+                                  "<champion>, <champion> **...**' for multiple champions.")
         async def favlist(message):
             await FollowSkinCommand.favlist(message)
 
-        @self.command(brief="Follow a champion in professional play",
-                      description="Receive messages from Zoe Bot whenever the given champion is being played in a "
-                                  "professional game. To stop receiving these notifications from Zoe Bot, use the "
-                                  "command '~follow <champion_name>'.")
-        async def follow(message, *champion_name):
-            await FollowProCommand.follow(message, *champion_name)
+        # @self.command(brief="Follow a champion in professional play",
+        #               description="Receive messages from Zoe Bot whenever the given champion is being played in a "
+        #                           "professional game. To stop receiving these notifications from Zoe Bot, use the "
+        #                           "command '~follow <champion>'.")
+        # async def follow(message, *champion_name):
+        #     await FollowProCommand.follow(message, *champion_name)
 
         @self.command(brief="Show all followed champions",
                       description="Show a list of all champions that Zoe Bot will notify a Discord User for when one "
                                   "or more champs are being played in a professional game. Remove a champion from "
-                                  "this list with the command '~follow <champion_name>'.")
+                                  "this list with the command '~follow <champion>'.")
         async def following(message):
             await FollowProCommand.following(message)
 
