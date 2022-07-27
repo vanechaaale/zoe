@@ -1,5 +1,3 @@
-from tinydb import Query
-
 import utilities
 from utilities import Constants
 
@@ -41,5 +39,3 @@ async def following(message):
         second=True
     )
     await message.channel.send(f"{pro_play_following}, and {skin_following}")
-
-
