@@ -202,7 +202,7 @@ bot = BaseCommand()
 
 # with open('Data/live_token') as file:
 #     token = file.readline()
-#     
+#
 load_dotenv()
 token = os.getenv('TOKEN')
 bot.run(token)
