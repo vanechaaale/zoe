@@ -59,6 +59,9 @@ class BaseCommand(commands.Bot):
             current_hour = int(dt.datetime.utcnow().strftime("%H"))
             # Check that it is Tuesday at 12 pm UTC
             if datetime.datetime.today().weekday() == 1 and current_hour == 16:
+                # Run web scraper
+                os.system('python skin_sales_spider.py')
+                # Notify users of their favorite champ skins on sale
                 await check_tracked_skins(self)
 
         @tasks.loop(minutes=3)
