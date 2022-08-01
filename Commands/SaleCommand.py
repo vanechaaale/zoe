@@ -6,8 +6,7 @@ import discord
 from Data import Quotes
 
 
-async def sale(channel, base_command):
-    bot = base_command
+async def sale(channel, bot):
     skin_sales_data = []
     with open("Data/skin_sales_data.json", 'r') as file:
         dictionary = json.load(file)
@@ -62,8 +61,8 @@ async def sale(channel, base_command):
             embed_dict['fields'][0]['name'] = skin_sales_data[count][0]
             embed_dict['fields'][0]['value'] = skin_sales_data[count][1]
             embed_dict['image']['url'] = image_urls_list[count]
-            embed_dict['footer']['text'] = \
-                f"{count + 1}/{len(image_urls_list)}\nShop refreshes every Monday at 3 pm EST "
+            # embed_dict['footer']['text'] = \
+            # f"{count + 1}/{len(image_urls_list)}\nShop refreshes every Monday at 3 pm EST "
             embed = discord.Embed.from_dict(embed_dict)
             await msg.edit(embed=embed)
         except (Exception,):

@@ -166,9 +166,9 @@ async def clear_cache(cache, h):
 
 async def check_tracked_skins(bot):
     """Message people to notify if a champ they like has a skin on sale"""
+    skin_db = bot.favorite_skin_db
     with open("Data/skin_sales_data.json", 'r') as file:
         skins_sale_data = json.load(file)
-        favorite_skin_db = bot.favorite_skin_db
         # Parse data of every skin on sale
         for entry in skins_sale_data:
             skin_name_rp_cost = " ".join(entry['skin_name_rp_cost'].split())
@@ -178,7 +178,7 @@ async def check_tracked_skins(bot):
             for champ_name in Constants.CHAMP_DICT.values():
                 if skin_name in Constants.CHAMP_SKINS_DICT[champ_name]:
                     champion = Query()
-                    query_results = favorite_skin_db.get(champion['champion_name'] == champ_name)
+                    query_results = skin_db.get(champion['champion_name'] == champ_name)
                     if query_results is not None:
                         user_ids_list = query_results['user_ids']
                         for user_id in user_ids_list:

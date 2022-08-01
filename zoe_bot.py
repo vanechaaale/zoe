@@ -1,7 +1,9 @@
 import asyncio
+import datetime as dt
 import os
+from datetime import datetime
 
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 import BaseMessageResponse
 from Commands import GuideCommand, LiveCommand, SaleCommand, FollowProCommand, FollowSkinCommand, \
@@ -12,7 +14,7 @@ from utilities import *
 # runs the skin sales webscraper and automatically updates all the skins on sale in the league shop
 # import skin_sales_spider
 
-help_command = commands.DefaultHelpCommand(no_category='List of Zoe Bot Commands')
+help_command = commands.DefaultHelpCommand(no_category="List of Zoe Bot Commands, use prefix '~'")
 intents = discord.Intents.default()
 intents.members = True
 
@@ -46,16 +48,28 @@ class BaseCommand(commands.Bot):
 
         @self.event
         async def on_ready():
-            cache_clear_hours = 2
-            check_tracked_mins = 3 * 60
             activity = discord.Game(name="Do something fun! The world might be ending... Or not!")
             await bot.change_presence(status=discord.Status.online, activity=activity)
-            await check_tracked_skins(self)
-            while True:
-                # Champions being followed in pro play are tracked in this loop
-                await check_tracked_champions(self)
-                await clear_cache(self.cache, cache_clear_hours)
-                await asyncio.sleep(check_tracked_mins)
+            update_weekly_skins.start()
+            update_pro_play.start()
+
+        @tasks.loop(hours=1)
+        # Check every hour for weekly sales update?????
+        async def update_weekly_skins():
+            current_hour = int(dt.datetime.utcnow().strftime("%H"))
+            # Check that it is Tuesday at 12 pm UTC
+            if datetime.datetime.today().weekday() == 1 and current_hour == 16:
+                await check_tracked_skins(self)
+
+        @tasks.loop(minutes=3)
+        # Check every 3 minutes for pro play
+        async def update_pro_play():
+            cache_clear_hours = 2
+            check_tracked_mins = 3 * 60
+            # Champions being followed in pro play are tracked here
+            await check_tracked_champions(self.bot)
+            await clear_cache(self.cache, cache_clear_hours)
+            await asyncio.sleep(check_tracked_mins)
 
         @self.command(hidden=True)
         @commands.is_owner()
@@ -194,7 +208,7 @@ class BaseCommand(commands.Bot):
                 if command_args.lower() == 'all':
                     await SaleCommand.sale_all(channel)
                 else:
-                    await SaleCommand.sale(channel, self)
+                    await SaleCommand.sale(channel, self.bot)
 
 
 bot = BaseCommand()
