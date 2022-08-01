@@ -35,7 +35,8 @@ class BaseCommand(commands.Bot):
         # Remember to re-init champ_dict at the start of every patch/after a new champion release
         self.champ_dict = Constants.get_champ_dict()
         # Remember to re-init champion_skins_dict() after new skin releases
-        self.champ_skins_set = Constants.get_champion_skins_dict()
+        # Dict of Champion: {Skins}
+        self.champ_skins_dict = Constants.get_champion_skins_dict()
         self.cache = dict()
         self.bot = commands.Bot(
             command_prefix='~',
@@ -73,6 +74,11 @@ class BaseCommand(commands.Bot):
             await check_tracked_champions(self.bot)
             await clear_cache(self.cache, cache_clear_hours)
             await asyncio.sleep(check_tracked_mins)
+
+        @tasks.loop(hours=24)
+        # Update champion data dictionary every day
+        async def update_champ_skins_dict():
+            self.champ_skins_dict = init_champion_skins_dict()
 
         @self.command(hidden=True)
         @commands.is_owner()
