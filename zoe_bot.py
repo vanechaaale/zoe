@@ -208,7 +208,7 @@ class BaseCommand(commands.Bot):
                 if command_args.lower() == 'all':
                     await SaleCommand.sale_all(channel)
                 else:
-                    await SaleCommand.sale(channel, self.bot)
+                    await SaleCommand.sale(channel, self)
 
 
 bot = BaseCommand()
