@@ -55,10 +55,9 @@ class BaseCommand(commands.Bot):
             update_pro_play.start()
 
         @tasks.loop(hours=1)
-        # Check every hour for weekly sales update?????
         async def update_weekly_skin_sales():
             current_hour = int(dt.datetime.utcnow().strftime("%H"))
-            # Check that it is Tuesday at 12 pm UTC
+            # Check that it is Tuesday at 12 pm EST, 16 UTC
             if datetime.datetime.today().weekday() == 1 and current_hour == 16:
                 # Run web scraper
                 os.system('python skin_sales_spider.py')
@@ -75,7 +74,7 @@ class BaseCommand(commands.Bot):
             await clear_cache(self.cache, cache_clear_hours)
             await asyncio.sleep(check_tracked_mins)
 
-        @tasks.loop(hours=24)
+        @tasks.loop(hours=1)
         # Update champion data and champion skins dictionaries every day
         async def update_champ_data_skins_info():
             current_hour = int(dt.datetime.utcnow().strftime("%H"))
