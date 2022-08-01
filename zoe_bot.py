@@ -105,8 +105,10 @@ class BaseCommand(commands.Bot):
                 if cmd.invoke(message) and not is_command(message):
                     await cmd.execute(message)
             if message.is_system() and message.type == discord.MessageType.new_member:
+                server_name = str(message.guild)
+                new_member = message.author.mention
                 quote = random.choice(Quotes.Greet)
-                await message.channel.send(f'"*{quote}*"')
+                await message.channel.send(f'Welcome to {server_name}, {new_member}!\n"*{quote}*"')
 
         @self.command(brief="Clear list of followed champions",
                       description="Clear your list of champions followed in professional play with '~clear pro', or "
