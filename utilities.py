@@ -166,9 +166,9 @@ async def clear_cache(cache, h):
 
 async def check_tracked_skins(bot):
     """Message people to notify if a champ they like has a skin on sale"""
+    skin_db = bot.favorite_skin_db
     with open("Data/skin_sales_data.json", 'r') as file:
         skins_sale_data = json.load(file)
-        favorite_skin_db = bot.favorite_skin_db
         # Parse data of every skin on sale
         for entry in skins_sale_data:
             skin_name_rp_cost = " ".join(entry['skin_name_rp_cost'].split())
@@ -178,7 +178,7 @@ async def check_tracked_skins(bot):
             for champ_name in Constants.CHAMP_DICT.values():
                 if skin_name in Constants.CHAMP_SKINS_DICT[champ_name]:
                     champion = Query()
-                    query_results = favorite_skin_db.get(champion['champion_name'] == champ_name)
+                    query_results = skin_db.get(champion['champion_name'] == champ_name)
                     if query_results is not None:
                         user_ids_list = query_results['user_ids']
                         for user_id in user_ids_list:
@@ -346,18 +346,22 @@ def get_player_info(role, team):
         r = player['role'].capitalize()
         if r == role:
             player_name = player['summonerName']
-            champion_name = check_for_special_name_match(re.sub(r"([A-Z])", r" \1", player['championId'])[1:])
+            player_champion = player['championId']
+            champion_name = check_for_special_name_match(re.sub(r"([A-Z])", r" \1", player_champion)[1:]) if \
+                player_champion != 'JarvanIV' else check_for_special_name_match('Jarvan')
             return [player_name, champion_name, role]
 
 
 # "Is {champion_name} on the given teams? -> Return player_champ_tourney_info
-def is_champion_on_team(team, champion_name):
+def is_champion_on_team(team, name_match):
     for player in team:
         # player['championId'] wont include spaces which breaks format_champion_name(), hence why it is not used
-        champion = check_for_special_name_match(re.sub(r"([A-Z])", r" \1", player['championId'])[1:])
-        role = player['role'].capitalize()
-        if champion.lower() == champion_name.lower():
-            return get_player_info(role, team)
+        player_champion = player['championId']
+        champion_name = check_for_special_name_match(re.sub(r"([A-Z])", r" \1", player_champion)[1:]) if \
+            player_champion != 'JarvanIV' else check_for_special_name_match('Jarvan')
+        if champion_name == name_match:
+            # Return player info once we find a result
+            return player['summonerName'], champion_name, player['role'].capitalize()
     return None
 
 
