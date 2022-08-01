@@ -76,28 +76,12 @@ class BaseCommand(commands.Bot):
             await asyncio.sleep(check_tracked_mins)
 
         @tasks.loop(hours=24)
-        # Update champion data dictionary every day
-        async def update_champ_skins_dict():
-            self.champ_skins_dict = init_champion_skins_dict()
-
-        @self.command(hidden=True)
-        @commands.is_owner()
-        async def shutdown(c):
-            await c.channel.send("Logging out...")
-            await bot.close()
-
-        @self.command(hidden=True)
-        @commands.is_owner()
-        async def update_skin_sales(channel, *args):
-            """
-            Command to manually run the skin sales webscraper AND notify users about their liked champs
-            """
-            args = ' '.join(args)
-            if args.lower() == 'spider':
-                os.system('python skin_sales_spider.py')
-                await channel.send("Successfully updated this week's champion skin sales.")
-            await check_tracked_skins(self)
-            await channel.send("Successfully notified users about their favorite champions' skin sales.")
+        # Update champion data and champion skins dictionaries every day
+        async def update_champ_data_skins_info():
+            current_hour = int(dt.datetime.utcnow().strftime("%H"))
+            if current_hour == 16:
+                self.champ_skins_dict = init_champion_skins_dict()
+                self.champ_dict = Constants.get_champ_dict(refresh_cache=True)
 
         @self.event
         async def on_guild_join(guild):
@@ -180,6 +164,12 @@ class BaseCommand(commands.Bot):
         async def live(channel, *champion_name):
             await LiveCommand.live(channel, *champion_name)
 
+        @self.command(hidden=True)
+        @commands.is_owner()
+        async def man_update_champ_data_skins_info():
+            self.champ_skins_dict = init_champion_skins_dict()
+            self.champ_dict = Constants.get_champ_dict(refresh_cache=True)
+
         @self.command(hidden=True,
                       brief="Show Zoe matchup tips! (WIP)",
                       description="View Zoe's matchup statistics against a champion")
@@ -218,6 +208,25 @@ class BaseCommand(commands.Bot):
                     await SaleCommand.sale_all(channel)
                 else:
                     await SaleCommand.sale(channel, self)
+
+        @self.command(hidden=True)
+        @commands.is_owner()
+        async def shutdown(c):
+            await c.channel.send("Logging out...")
+            await self.bot.close()
+
+        @self.command(hidden=True)
+        @commands.is_owner()
+        async def update_skin_sales(channel, *args):
+            """
+            Command to manually run the skin sales webscraper AND notify users about their liked champs
+            """
+            args = ' '.join(args)
+            if args.lower() == 'spider':
+                os.system('python skin_sales_spider.py')
+                await channel.send("Successfully updated this week's champion skin sales.")
+            await check_tracked_skins(self)
+            await channel.send("Successfully notified users about their favorite champions' skin sales.")
 
 
 bot = BaseCommand()
