@@ -44,18 +44,18 @@ class BaseCommand(commands.Bot):
             intents=intents)
         self.db = Constants.DB
         self.favorite_skin_db = Constants.SKIN_DB
-        self.free_champ_ids = Constants.FREE_CHAMPION_IDS
+        self.free_champ_ids = get_free_champion_ids()
 
         @self.event
         async def on_ready():
             activity = discord.Game(name="Do something fun! The world might be ending... Or not!")
             await bot.change_presence(status=discord.Status.online, activity=activity)
-            update_weekly_skins.start()
+            update_weekly_skin_sales.start()
             update_pro_play.start()
 
         @tasks.loop(hours=1)
         # Check every hour for weekly sales update?????
-        async def update_weekly_skins():
+        async def update_weekly_skin_sales():
             current_hour = int(dt.datetime.utcnow().strftime("%H"))
             # Check that it is Tuesday at 12 pm UTC
             if datetime.datetime.today().weekday() == 1 and current_hour == 16:

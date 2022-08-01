@@ -1,9 +1,9 @@
-from utilities import get_zoe_error_message, Constants
+from utilities import get_zoe_error_message, get_free_champion_ids, Constants
 
 
 async def rotation(message):
     champ_dict = Constants.CHAMP_DICT
-    free_champ_ids = Constants.FREE_CHAMPION_IDS
+    free_champ_ids = get_free_champion_ids()
     try:
         free_rotation = []
         for champion_id in free_champ_ids['freeChampionIds']:

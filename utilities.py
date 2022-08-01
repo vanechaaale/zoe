@@ -104,12 +104,14 @@ class Constants:
             cls.CHAMP_SKINS_DICT = ast.literal_eval(data)
             return cls.CHAMP_SKINS_DICT
 
-    FREE_CHAMPION_IDS = get_lol_watcher().champion.rotations(REGION)
-
 
 async def sendDm(bot, user_id, message):
     user = await bot.get_user(user_id)
     await user.send(message)
+
+
+def get_free_champion_ids():
+    return get_lol_watcher().champion.rotations(Constants.REGION)
 
 
 def init_champion_skins_dict():
