@@ -28,7 +28,6 @@ def get_lolesports_api():
 
 class Constants:
     REGION = 'na1'
-    # Using Alpha DBs
     DB = TinyDB('Data/database.json')
     SKIN_DB = TinyDB('Data/skin_database.json')
     LOL_ESPORTS_LIVE_LINK = 'https://lolesports.com/live/'
