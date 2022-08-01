@@ -213,13 +213,7 @@ class BaseCommand(commands.Bot):
 
 bot = BaseCommand()
 
-
-def main():
-    # Start up the bot
-    with open('Data/alpha_token') as file:
-        token = file.readline()
-    bot.run(token)
-
-
-if __name__ == "__main__":
-    main()
+# Start up the bot
+with open('Data/alpha_token') as file:
+    token = file.readline()
+bot.run(token)
