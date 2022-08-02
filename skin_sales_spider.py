@@ -1,13 +1,18 @@
-import cv2
+
 import json
-import numpy as np
 import os
-import requests
-import scrapy
-import shutil
 from datetime import datetime
-from imageio.v2 import imread, imwrite
+
+import scrapy
 from scrapy.crawler import CrawlerProcess
+
+# TODO: re import these when jpg file reading is fixed
+
+# import shutil
+# from imageio.v2 import imread, imwrite
+# import numpy as np
+# import cv2
+# import requests
 
 
 # Python script to scrape earlygame.com for skin sales
@@ -69,44 +74,51 @@ def main():
     crawler = CustomCrawler()
     crawler.crawl(SkinSalesSpider)
 
+    """
+    Create JPG images of each individual splashart (not to be used in an embed which require url and not a jpg), then
+    put them all together in a large jpg image of all skin sales
+    """
     # reset images for sales command
-    images = []
+    # images = []
     with open("Data/skin_sales_data.json", 'r') as file:
         skins_sale_dictionary = json.load(file)
     # iterate through dictionary
-    count = 0
+    # count = 0
     with open("Data/image_urls_list.txt", 'w') as image_urls_file:
+        # Write each splash art img url to a list of urls
         for entry in skins_sale_dictionary:
             image_url = entry['skin_image']
             image_url_list = image_url.split(' ')
             image_url = image_url_list[1].replace('src=', '').replace('"', '')
             image_urls_file.write(image_url + '\n')
-            r = requests.get(image_url,
-                             stream=True, headers={'User-agent': 'Mozilla/5.0'})
-            if r.status_code == 200:
-                # Write a single skin splashart to the Data/skin_sale_jpgs dir
-                with open(f"Data/skin_sale_jpgs/single_skin_image{count}.jpg", 'wb') as file:
-                    r.raw.decode_content = True
-                    shutil.copyfileobj(r.raw, file)
-                    image = imread(file.name)[..., :3]
-                    x = int(image.shape[1] * 1)
-                    y = int(image.shape[0] * 1)
-                    # resizing image
-                    image = cv2.resize(image, dsize=(x, y), interpolation=cv2.INTER_CUBIC)
-                    # cropping image
-                    x_crop_amount = int(x * 0)
-                    y_crop_amount = int(y * 0)
-                    image = image[y_crop_amount: y - y_crop_amount, x_crop_amount:x - x_crop_amount]
-                    images.append(image)
-            count += 1
-    # 5 x 3 display
-    rows = np.hstack(images[0:5]), np.hstack(images[5:10]), np.hstack(images[10:15])
-    # 3 x 5 display
-    # rows = np.hstack(images[0:3]), np.hstack(images[3:6]), np.hstack(images[6:9]), np.hstack(images[9:12]), \
-    #        np.hstack(images[12:15])
-    full_image = np.vstack(rows)
-    # Full image of all 15 sale skins
-    imwrite('Data/full_skin_sales_image.jpg', full_image)
+    # TODO: Fix writing to jpg img files for weekly skin sale splash arts
+
+    #         r = requests.get(image_url,
+    #                          stream=True, headers={'User-agent': 'Mozilla/5.0'})
+    #         if r.status_code == 200:
+    #             # Write a single skin splashart to the Data/skin_sale_jpgs dir
+    #             with open(f"Data/skin_sale_jpgs/single_skin_image{count}.jpg", 'wb') as file:
+    #                 r.raw.decode_content = True
+    #                 shutil.copyfileobj(r.raw, file)
+    #                 image = imread(file.name)[..., :3]
+    #                 x = int(image.shape[1] * 1)
+    #                 y = int(image.shape[0] * 1)
+    #                 # resizing image
+    #                 image = cv2.resize(image, dsize=(x, y), interpolation=cv2.INTER_CUBIC)
+    #                 # cropping image
+    #                 x_crop_amount = int(x * 0)
+    #                 y_crop_amount = int(y * 0)
+    #                 image = image[y_crop_amount: y - y_crop_amount, x_crop_amount:x - x_crop_amount]
+    #                 images.append(image)
+    #         count += 1
+    # # 5 x 3 display
+    # rows = np.hstack(images[0:5]), np.hstack(images[5:10]), np.hstack(images[10:15])
+    # # 3 x 5 display
+    # # rows = np.hstack(images[0:3]), np.hstack(images[3:6]), np.hstack(images[6:9]), np.hstack(images[9:12]), \
+    # #        np.hstack(images[12:15])
+    # full_image = np.vstack(rows)
+    # # Full image of all 15 sale skins
+    # imwrite('Data/full_skin_sales_image.jpg', full_image)
     print(f'Skin sales spider finished scraping at {datetime.now()}')
 
 
