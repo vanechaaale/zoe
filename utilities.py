@@ -78,11 +78,11 @@ class Constants:
     CHAMP_DICT = dict()
 
     @classmethod
-    def get_champ_dict(cls, refresh_cache=False):
+    def get_champ_dict(cls, refresh_dict=False):
         """
         Returns and sets CHAMP_DICT['id'] -> 'champion_name'
         """
-        if refresh_cache or not cls.CHAMP_DICT:
+        if refresh_dict or not cls.CHAMP_DICT:
             watcher = get_lol_watcher()
             # check league's latest patch version
             latest = watcher.data_dragon.versions_for_region(Constants.REGION)['n']['champion']
@@ -457,7 +457,9 @@ async def add_remove_favorite(message, champion_name, db, user_id, success_messa
     champ_names_list = ' '.join(champion_name).split(',')
     for unformatted_name in champ_names_list:
         champion_name = format_champion_name(unformatted_name)
-        if not champion_name:
+        if not unformatted_name:
+            continue
+        elif not champion_name and unformatted_name:
             not_found.add(unformatted_name)
             continue
         # Query db for formatted champ name
