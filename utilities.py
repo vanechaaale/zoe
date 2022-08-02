@@ -404,7 +404,7 @@ def find_pro_play_matchup(champion_name):
                     # player = [0 : player_name, 1: champion_name, 2: role, 3: tournament_name, 4: url_slug,
                     # 5: icon, 6: block_name, 7: game_id]
                     # enemy = [enemy_name, champion_name, role]
-                    player_champ_info = player_champ_info + tournament_info
+                    player_champ_info = list(player_champ_info) + tournament_info
                     game_info['player'] = player_champ_info
                     game_info['enemy'] = enemy_player_info
                     matches_found.append(game_info)
