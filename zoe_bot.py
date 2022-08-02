@@ -87,7 +87,7 @@ class BaseCommand(commands.Bot):
             cache_clear_hours = 2
             check_tracked_mins = 3 * 60
             # Champions being followed in pro play are tracked here
-            await check_tracked_champions(self.bot)
+            await check_tracked_champions(self)
             await clear_cache(self.cache, cache_clear_hours)
             await asyncio.sleep(check_tracked_mins)
 
