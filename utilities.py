@@ -3,11 +3,17 @@ import datetime
 import json
 import random
 import re
+import shutil
 import urllib.request
 from json import JSONDecodeError
 
+import cv2
 import discord
+import numpy as np
+import requests
+from cv2 import imread
 from fuzzywuzzy import fuzz
+from imageio.v3 import imwrite
 from riotwatcher import LolWatcher
 from tinydb import TinyDB, Query
 
@@ -123,16 +129,7 @@ def init_champion_skins_dict():
     latest = watcher.data_dragon.versions_for_region(Constants.REGION)['n']['champion']
     champ_skins_dict = dict()
     for champion in Constants.get_champion_skins_dict().keys():
-        # Special Case names
-        if champion in Constants.API_URL_NAME_MATCHES.keys():
-            url_champion = Constants.API_URL_NAME_MATCHES[champion]
-        elif "'" in champion:
-            # Account for Void champion names ('Kai'sa') formatting
-            url_champion = champion.replace("'", '').lower().capitalize()
-        else:
-            # and champions with space in their names ('Lee Sin'), as well as '.' (looking at you mundo)
-            url_champion = champion.replace(' ', '').replace('.', '') if ' ' in champion or '.' in champion \
-                else champion
+        url_champion = get_champion_name_url(champion)
         with urllib.request.urlopen(
                 # Search for all champs' skin data on ddragon
                 f'https://ddragon.leagueoflegends.com/cdn/{latest}/data/en_US/champion/{url_champion}.json') as url:
@@ -505,3 +502,61 @@ def get_following_list(user_id, db, success_message, second=False):
     else:
         return f"<@{user_id}> is not {success_message} any champion... (Except for Zoe, obviously)" if not second \
             else f"is not {success_message} any champion... (Except for Zoe, obviously)"
+
+
+def get_champion_name_url(champion):
+    # Special Case names
+    if champion in Constants.API_URL_NAME_MATCHES.keys():
+        return Constants.API_URL_NAME_MATCHES[champion]
+    elif "'" in champion:
+        # Account for Void champion names ('Kai'sa') formatting
+        return champion.replace("'", '').lower().capitalize()
+    else:
+        # and champions with space in their names ('Lee Sin'), as well as '.' (looking at you mundo)
+        url_champion = champion.replace(' ', '').replace('.', '') if ' ' in champion or '.' in champion \
+            else champion
+        return url_champion
+
+
+def update_free_rotation_images(c):
+    # Get free rotation champions and sort them
+    # For every champion in the list,
+    free_champ_ids = get_free_champion_ids()
+    champ_dict = Constants.CHAMP_DICT
+    free_rotation = []
+    for champion_id in free_champ_ids['freeChampionIds']:
+        free_rotation.append(champ_dict[str(champion_id)])
+    free_rotation.sort()
+    count = 0
+    images = []
+    for champion in free_rotation:
+        url_champion_name = get_champion_name_url(champion)
+        url = f"http://ddragon.leagueoflegends.com/cdn/img/champion/loading/{url_champion_name}_0.jpg"
+        # Champion loading icon jpg is 308 x 560
+        r = requests.get(url,
+                         stream=True, headers={'User-agent': 'Mozilla/5.0'})
+        if r.status_code == 200:
+            # Write a single skin splashart to the Data/skin_sale_jpgs dir
+            with open(f"Data/free_rotation_jpgs/free_champ{count}.jpg", 'wb') as file:
+                # write image to file
+                r.raw.decode_content = True
+                shutil.copyfileobj(r.raw, file)
+                image = imread(file.name)[..., :3]
+                x = int(image.shape[1] * 1)
+                y = int(image.shape[0] * 1)
+                # resizing image
+                image = cv2.resize(image, dsize=(x, y), interpolation=cv2.INTER_CUBIC)
+                # cropping image
+                x_crop_amount = int(x * 0)
+                y_crop_amount = int(y * 0)
+                image = image[y_crop_amount: y - y_crop_amount, x_crop_amount:x - x_crop_amount]
+                images.append(image)
+        count += 1
+    # stack 2 rows of 8 champion loading icon images
+    rows = np.hstack(images[0:8]), np.hstack(images[8:16])
+    image = np.vstack(rows)
+    # Convert the image backt to RGB because OpenCV uses BGR as its colour order for images
+    full_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    # Save the full image to a file
+    imwrite('Data/free_rotation_jpgs/free_rotation_full.jpg', full_image)
+    return
