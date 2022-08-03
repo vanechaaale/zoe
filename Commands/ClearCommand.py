@@ -18,7 +18,7 @@ async def clear(message, *args):
         success_message = f"Successfully cleared <@{user_id}>'s list of champions followed in weekly skin sales."
     else:
         await message.channel.send("Use **'~clear pro'** to clear your list of champions followed in professional"
-                                   " play, or **'~clear fav'** to clear your list of champions followed in the weekly"
+                                   " play, or **'~clear fav'** to clear your list of champions followed in the weekly "
                                    "skin sales rotation.")
         return
     # Clear user's list of favorites/followed
