@@ -7,7 +7,7 @@ async def follow_pro(message, *champion_name):
     # If no args were given
     if not champion_name:
         await message.channel.send(
-            "use '~favorite <champion>, <champion>, **...**' to be notified when this champion is played in a "
+            "use '***~follow pro <champion>, <champion>, ...***' to be notified when this champion is played in a "
             "professional game!")
         return
     else:

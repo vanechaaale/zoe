@@ -271,7 +271,7 @@ def get_embed_for_player(game_info, pm=False):
     if pm:
         embed.set_footer(text=f"**You are receiving this message because you opted to track this champion in League of "
                               f"Legends professional play. To disable these messages from Zoe Bot, reply "
-                              f"with '~follow <champion_name>'**")
+                              f"with '**~follow pro <champion_name>'**")
     return embed
 
 
