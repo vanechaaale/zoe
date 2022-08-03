@@ -518,7 +518,7 @@ def get_champion_name_url(champion):
         return url_champion
 
 
-def update_free_rotation_images(c):
+def update_free_rotation_images():
     # Get free rotation champions and sort them
     # For every champion in the list,
     free_champ_ids = get_free_champion_ids()

@@ -55,21 +55,18 @@ class BaseCommand(commands.Bot):
             update_weekly_skin_sales.start()
             update_pro_play.start()
             update_champ_data_skins_info.start()
-            # update_free_rotation.start()
+            update_free_rotation.start()
 
-        # @tasks.loop(hours=1)
-        @self.command(hidden=True)
-        @commands.is_owner()
-        async def update_free_rotation(c):
+        @tasks.loop(hours=1)
+        async def update_free_rotation():
             """
             Task loop to update the displayed images of champions that are in the weekly free rotation, every week
             on Tuesdays at 12 PM EST
             """
-            update_free_rotation_images(c)
-            # current_hour = int(dt.datetime.utcnow().strftime("%H"))
-            # # Check that it is Tuesday at 12 pm EST, 16 UTC
-            # if datetime.datetime.today().weekday() == 1 and current_hour == 16:
-            #     pass
+            current_hour = int(dt.datetime.utcnow().strftime("%H"))
+            # Check that it is Tuesday at 12 pm EST, 16 UTC
+            if datetime.datetime.today().weekday() == 1 and current_hour == 16:
+                update_free_rotation_images()
 
         @tasks.loop(hours=1)
         async def update_weekly_skin_sales():
