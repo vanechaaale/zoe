@@ -250,5 +250,5 @@ class BaseCommand(commands.Bot):
 bot = BaseCommand()
 
 load_dotenv()
-token = os.getenv('ALPHA_TOKEN')
+token = os.getenv('TOKEN')
 bot.run(token)
