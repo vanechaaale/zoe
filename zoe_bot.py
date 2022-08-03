@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from discord.ext import commands, tasks
 import BaseMessageResponse
 from Commands import GuideCommand, LiveCommand, SaleCommand, FollowProCommand, FollowSkinCommand, \
-    WeeklyRotationCommand, ClearCommand, FollowingListCommand
+    WeeklyRotationCommand, ClearCommand, FollowListCommand
 from Data import gifs
 from utilities import *
 
@@ -163,7 +163,7 @@ class BaseCommand(commands.Bot):
                                   "'~follow pro <champion>, <champion> ...' for professional play, or use "
                                   "'~follow skin <champion>, <champion> ...' for champion skins.")
         async def following(message):
-            await FollowingListCommand.following(message)
+            await FollowListCommand.following(message)
 
         @self.command(brief="Zoe gifs.", description="Beautiful Zoe gifs.")
         async def gif(channel):

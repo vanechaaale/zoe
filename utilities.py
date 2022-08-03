@@ -530,14 +530,8 @@ def get_champion_name_url(champion):
 
 
 def update_free_rotation_images():
-    # Get free rotation champions and sort them
-    # For every champion in the list,
-    free_champ_ids = get_free_champion_ids()
-    champ_dict = Constants.CHAMP_DICT
-    free_rotation = []
-    for champion_id in free_champ_ids['freeChampionIds']:
-        free_rotation.append(champ_dict[str(champion_id)])
-    free_rotation.sort()
+    # Constants.FREE_CHAMPS should have been initialized upon bot startup
+    free_rotation = Constants.FREE_CHAMPS
     count = 0
     images = []
     for champion in free_rotation:
@@ -558,9 +552,9 @@ def update_free_rotation_images():
                 # resizing image
                 image = cv2.resize(image, dsize=(x, y), interpolation=cv2.INTER_CUBIC)
                 # cropping image
-                x_crop_amount = int(x * 0)
-                y_crop_amount = int(y * 0)
-                image = image[y_crop_amount: y - y_crop_amount, x_crop_amount:x - x_crop_amount]
+                # x_crop_amount = int(x * 0)
+                # y_crop_amount = int(y * 0)
+                # image = image[y_crop_amount: y - y_crop_amount, x_crop_amount:x - x_crop_amount]
                 images.append(image)
         count += 1
     # stack 2 rows of 8 champion loading icon images
@@ -570,4 +564,3 @@ def update_free_rotation_images():
     full_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     # Save the full image to a file
     imwrite('Data/free_rotation_jpgs/free_rotation_full.jpg', full_image)
-    return
