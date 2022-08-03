@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from discord.ext import commands, tasks
 import BaseMessageResponse
 from Commands import GuideCommand, LiveCommand, SaleCommand, FollowProCommand, FollowSkinCommand, \
-    WeeklyRotationCommand, ClearCommand
+    WeeklyRotationCommand, ClearCommand, FollowingListCommand
 from Data import gifs
 from utilities import *
 
@@ -160,10 +160,10 @@ class BaseCommand(commands.Bot):
                       description="Show a list of all champions that Zoe Bot will notify a Discord User for when one "
                                   "or more champions are being played in a professional game, or if a champion has a "
                                   "skin on sale this week. Remove a champion from this list with the command "
-                                  "'~favorite pro <champion>, <champion> ...' for professional play, or use "
-                                  "'~favorite skin <champion>, <champion> ...' for champion skins.")
+                                  "'~follow pro <champion>, <champion> ...' for professional play, or use "
+                                  "'~follow skin <champion>, <champion> ...' for champion skins.")
         async def following(message):
-            await FollowProCommand.following(message)
+            await FollowingListCommand.following(message)
 
         @self.command(brief="Zoe gifs.", description="Beautiful Zoe gifs.")
         async def gif(channel):
