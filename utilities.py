@@ -110,6 +110,17 @@ class Constants:
             cls.CHAMP_SKINS_DICT = ast.literal_eval(data)
             return cls.CHAMP_SKINS_DICT
 
+    FREE_CHAMPS = []
+
+    @classmethod
+    def get_free_champ_rotation(cls):
+        # Fetch f2p champ ids
+        free_champ_ids = get_free_champion_ids()['freeChampionIds']
+        free_rotation = [Constants.CHAMP_DICT[str(champ_id)] for champ_id in free_champ_ids]
+        free_rotation.sort()
+        cls.FREE_CHAMPS = free_rotation
+        return cls.FREE_CHAMPS
+
 
 async def sendDm(bot, user_id, message):
     user = await bot.get_user(user_id)

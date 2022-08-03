@@ -1,18 +1,14 @@
 import discord
 
-from utilities import get_free_champion_ids, Constants
+from utilities import Constants
 
 
 async def rotation(message):
-    # Fetch f2p champ ids
-    free_champ_ids = get_free_champion_ids()['freeChampionIds']
-    free_rotation = [Constants.CHAMP_DICT[str(champ_id)] for champ_id in free_champ_ids]
-    free_rotation.sort()
     embed = discord.Embed(color=0xe8bffb)
     embed.add_field(
         name="Weekly Free Champion Rotation:",
-        value=f"{' | '.join(free_rotation[0:4])}\n{' | '.join(free_rotation[4:8])}\n\n"
-              f"{' | '.join(free_rotation[8:12])}\n{' | '.join(free_rotation[12:16])}",
+        value=f"{' | '.join(Constants.FREE_CHAMPS[0:4])}\n{' | '.join(Constants.FREE_CHAMPS[4:8])}\n\n"
+              f"{' | '.join(Constants.FREE_CHAMPS[8:12])}\n{' | '.join(Constants.FREE_CHAMPS[12:16])}",
         inline=False
     )
     # Send collage of all champion splash arts

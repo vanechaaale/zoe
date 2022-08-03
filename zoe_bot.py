@@ -38,6 +38,7 @@ class BaseCommand(commands.Bot):
         # Remember to re-init champion_skins_dict() after new skin releases
         # Dict of Champion: {Skins}
         self.champ_skins_dict = Constants.get_champion_skins_dict()
+        self.free_champ_rotation = Constants.get_free_champ_rotation()
         self.cache = dict()
         self.bot = commands.Bot(
             command_prefix='~',
@@ -46,7 +47,6 @@ class BaseCommand(commands.Bot):
             intents=intents)
         self.db = Constants.DB
         self.favorite_skin_db = Constants.SKIN_DB
-        self.free_champ_ids = get_free_champion_ids()
 
         @self.event
         async def on_ready():
@@ -64,9 +64,10 @@ class BaseCommand(commands.Bot):
             on Tuesdays at 12 PM EST
             """
             current_hour = int(dt.datetime.utcnow().strftime("%H"))
-            # Check that it is Tuesday at 12 pm EST, 16 UTC
+            # Check that it is Tuesday at 12 pm EST, 16 UTC and update free rotation image and free rotation list
             if datetime.datetime.today().weekday() == 1 and current_hour == 16:
                 update_free_rotation_images()
+                self.free_champ_rotation = Constants.get_free_champ_rotation()
 
         @tasks.loop(hours=1)
         async def update_weekly_skin_sales():
