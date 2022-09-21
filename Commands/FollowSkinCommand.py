@@ -1,5 +1,3 @@
-from tinydb import Query
-
 import utilities
 from utilities import Constants
 
@@ -18,21 +16,3 @@ async def follow_skin(message, *champion_name):
             user_id=message.author.id,
             success_message="following weekly skin sales for:"
         )
-
-
-async def favlist(message):
-    tracked_list = []
-    user_id = message.author.id
-    for champ_name in Constants.CHAMP_DICT.values():
-        champion = Query()
-        skin_db = Constants.SKIN_DB
-        query_results = skin_db.get(champion['champion_name'] == champ_name)
-        if query_results is not None:
-            user_ids_list = query_results['user_ids']
-            if user_id in user_ids_list:
-                tracked_list.append(champ_name)
-    if len(tracked_list) != 0:
-        await message.channel.send(
-            f"<@{user_id}>'s favorite champions: {', '.join(tracked_list)}")
-    else:
-        await message.channel.send(f"<@{user_id}> has no favorite champions... (Other than Zoe obviously)")

@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from discord.ext import commands, tasks
 import BaseMessageResponse
 from Commands import GuideCommand, LiveCommand, SaleCommand, FollowProCommand, FollowSkinCommand, \
-    WeeklyRotationCommand, ClearCommand
+    WeeklyRotationCommand, ClearCommand, FollowListCommand
 from Data import gifs
 from utilities import *
 
@@ -38,6 +38,7 @@ class BaseCommand(commands.Bot):
         # Remember to re-init champion_skins_dict() after new skin releases
         # Dict of Champion: {Skins}
         self.champ_skins_dict = Constants.get_champion_skins_dict()
+        self.free_champ_rotation = Constants.get_free_champ_rotation()
         self.cache = dict()
         self.bot = commands.Bot(
             command_prefix='~',
@@ -46,7 +47,6 @@ class BaseCommand(commands.Bot):
             intents=intents)
         self.db = Constants.DB
         self.favorite_skin_db = Constants.SKIN_DB
-        self.free_champ_ids = get_free_champion_ids()
 
         @self.event
         async def on_ready():
@@ -55,21 +55,19 @@ class BaseCommand(commands.Bot):
             update_weekly_skin_sales.start()
             update_pro_play.start()
             update_champ_data_skins_info.start()
-            # update_free_rotation.start()
+            update_free_rotation.start()
 
-        # @tasks.loop(hours=1)
-        @self.command(hidden=True)
-        @commands.is_owner()
-        async def update_free_rotation(c):
+        @tasks.loop(hours=1)
+        async def update_free_rotation():
             """
             Task loop to update the displayed images of champions that are in the weekly free rotation, every week
             on Tuesdays at 12 PM EST
             """
-            update_free_rotation_images(c)
-            # current_hour = int(dt.datetime.utcnow().strftime("%H"))
-            # # Check that it is Tuesday at 12 pm EST, 16 UTC
-            # if datetime.datetime.today().weekday() == 1 and current_hour == 16:
-            #     pass
+            current_hour = int(dt.datetime.utcnow().strftime("%H"))
+            # Check that it is Tuesday at 12 pm EST, 16 UTC and update free rotation image and free rotation list
+            if datetime.datetime.today().weekday() == 1 and current_hour == 16:
+                update_free_rotation_images()
+                self.free_champ_rotation = Constants.get_free_champ_rotation()
 
         @tasks.loop(hours=1)
         async def update_weekly_skin_sales():
@@ -162,10 +160,10 @@ class BaseCommand(commands.Bot):
                       description="Show a list of all champions that Zoe Bot will notify a Discord User for when one "
                                   "or more champions are being played in a professional game, or if a champion has a "
                                   "skin on sale this week. Remove a champion from this list with the command "
-                                  "'~favorite pro <champion>, <champion> ...' for professional play, or use "
-                                  "'~favorite skin <champion>, <champion> ...' for champion skins.")
+                                  "'~follow pro <champion>, <champion> ...' for professional play, or use "
+                                  "'~follow skin <champion>, <champion> ...' for champion skins.")
         async def following(message):
-            await FollowProCommand.following(message)
+            await FollowListCommand.following(message)
 
         @self.command(brief="Zoe gifs.", description="Beautiful Zoe gifs.")
         async def gif(channel):
