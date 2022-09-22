@@ -182,9 +182,17 @@ class BaseCommand(commands.Bot):
 
         @self.command(hidden=True)
         @commands.is_owner()
-        async def man_update_champ_data_skins_info():
+        async def man_update_champ_data_skins_info(channel):
             self.champ_skins_dict = init_champion_skins_dict()
             self.champ_dict = Constants.get_champ_dict(refresh_dict=True)
+            await channel.send("Successfully updated champion dictionary.")
+
+        @self.command(hidden=True)
+        @commands.is_owner()
+        async def man_update_free_rotation(channel):
+            update_free_rotation_images()
+            self.free_champ_rotation = Constants.get_free_champ_rotation()
+            await channel.send("Successfully updated this week's champion free rotation.")
 
         @self.command(hidden=True,
                       brief="Show Zoe matchup tips! (WIP)",
