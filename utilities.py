@@ -105,7 +105,7 @@ class Constants:
 
     @classmethod
     def get_champion_skins_dict(cls):
-        with open('Data/all_champion_skins.txt') as file:
+        with open('Data/all_champion_skins.txt', encoding = "ISO-8859-1") as file:
             data = file.read()
             cls.CHAMP_SKINS_DICT = ast.literal_eval(data)
             return cls.CHAMP_SKINS_DICT
