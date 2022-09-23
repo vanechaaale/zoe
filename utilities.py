@@ -80,13 +80,13 @@ class Constants:
         "Renata Glasc": "Renata",
     }
 
-    TRACKED_CHAMP_PM_MSG = f"**You are receiving this message because you opted to track this champion in League of " \
+    TRACKED_CHAMP_PM_MSG = f"You are receiving this message because you opted to track this champion in League of " \
                            f"Legends professional play. To disable these messages from Zoe Bot, reply with " \
-                           f"'**~follow pro <champion_name>'**"
+                           f"'**~follow pro <champion_name>'"
 
-    TRACKED_SKIN_PM_MSG = f"\n**You are receiving this message because you opted to track League of " \
+    TRACKED_SKIN_PM_MSG = f"You are receiving this message because you opted to track League of " \
                           f"Legends skin sales for this champion. To disable these messages, reply " \
-                          f"with '~follow skin <champion_name>'**"
+                          f"with '~follow skin <champion_name>'"
 
     # Class Constants: CHAMP_DICT, CHAMP_SKINS_DICT
     CHAMP_DICT = dict()
