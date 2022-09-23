@@ -1,7 +1,7 @@
 import discord
 
-from utilities import check_for_special_name_match, find_pro_play_matchup, pro_all, get_embed_for_player, \
-    get_fuzzy_match
+from utilities import check_for_special_name_match, find_pro_play_matchup, pro_all, get_pp_embed_for_player, \
+    get_fuzzy_match, Constants
 
 
 async def live(channel, *champion_name):
@@ -26,6 +26,6 @@ async def live(channel, *champion_name):
         for game_info in matches_found:
             if game_info not in seen:
                 seen.append(game_info)
-                await channel.send(embed=get_embed_for_player(game_info))
+                await channel.send(embed=get_pp_embed_for_player(game_info, message=Constants.TRACKED_CHAMP_PM_MSG))
     else:
         await channel.send(f"{champion_name} isn't on Summoner's Rift right now :(")

@@ -80,6 +80,14 @@ class Constants:
         "Renata Glasc": "Renata",
     }
 
+    TRACKED_CHAMP_PM_MSG = f"**You are receiving this message because you opted to track this champion in League of " \
+                           f"Legends professional play. To disable these messages from Zoe Bot, reply with " \
+                           f"'**~follow pro <champion_name>'**"
+
+    TRACKED_SKIN_PM_MSG = f"\n**You are receiving this message because you opted to track League of " \
+                          f"Legends skin sales for this champion. To disable these messages, reply " \
+                          f"with '~follow skin <champion_name>'**"
+
     # Class Constants: CHAMP_DICT, CHAMP_SKINS_DICT
     CHAMP_DICT = dict()
 
@@ -105,7 +113,7 @@ class Constants:
 
     @classmethod
     def get_champion_skins_dict(cls):
-        with open('Data/all_champion_skins.txt', encoding = "ISO-8859-1") as file:
+        with open('Data/all_champion_skins.txt', encoding="ISO-8859-1") as file:
             data = file.read()
             cls.CHAMP_SKINS_DICT = ast.literal_eval(data)
             return cls.CHAMP_SKINS_DICT
@@ -175,15 +183,22 @@ async def clear_cache(cache, h):
 
 async def check_tracked_skins(bot):
     """Message people to notify if a champ they like has a skin on sale"""
-    skin_db = bot.favorite_skin_db
     with open("Data/skin_sales_data.json", 'r') as file:
         skins_sale_data = json.load(file)
+        index = 0
+        # List of image URLs
+        image_urls_file = open("Data/image_urls_list.txt", "r")
+        image_urls_list = []
+        for image_url in image_urls_file:
+            image_urls_list.append(image_url)
         # Parse data of every skin on sale
         for entry in skins_sale_data:
             skin_name_rp_cost = " ".join(entry['skin_name_rp_cost'].split())
+            skin_image_url = image_urls_list[index]
             skin_data = skin_name_rp_cost.split(' ')
             skin_name = ' '.join(skin_data[0: len(skin_data) - 3])
             skin_rp_cost = ' '.join(skin_data[len(skin_data) - 2: len(skin_data)])
+            skin_db = bot.favorite_skin_db
             for champ_name in Constants.CHAMP_DICT.values():
                 if skin_name in Constants.CHAMP_SKINS_DICT[champ_name]:
                     champion = Query()
@@ -191,12 +206,20 @@ async def check_tracked_skins(bot):
                     if query_results is not None:
                         user_ids_list = query_results['user_ids']
                         for user_id in user_ids_list:
-                            # print(f"{user_id}: {skin_name} is on sale")
                             user = bot.get_user(user_id)
-                            await user.send(f"{skin_name} is on sale this week for {skin_rp_cost}!"
-                                            f"\n**You are receiving this message because you opted to track League of "
-                                            f"Legends skin sales for this champion. To disable these messages, reply "
-                                            f"with '~favorite <champion_name>'**")
+                            await send_ss_embed_user(user, skin_name, skin_rp_cost, skin_image_url)
+            index += 1
+
+
+# TODO: this
+async def send_ss_embed_user(user, skin_name, skin_rp_cost, skin_image_url):
+    embed = discord.Embed(color=0x87cefa)
+    embed.add_field(name='Weekly Champion Skin Sales',
+                    value=f"{skin_name} is on sale this week for {skin_rp_cost}!",
+                    inline=False)
+    embed.set_image(url=skin_image_url)
+    embed.set_footer(text=Constants.TRACKED_SKIN_PM_MSG)
+    await user.send(embed=embed)
 
 
 def check_for_special_name_match(champion_name):
@@ -258,7 +281,7 @@ def get_live_match_id(games):
             return int(game['id'])
 
 
-def get_embed_for_player(game_info, pm=False):
+def get_pp_embed_for_player(game_info, message, pm=False):
     """Given game info, returns an embed with all relevant information attached
     """
     embed = discord.Embed(color=0x87cefa)
@@ -280,9 +303,7 @@ def get_embed_for_player(game_info, pm=False):
     embed.add_field(name="Watch live on LolEsports:", value=f"{url}", inline=False)
     embed.set_thumbnail(url=icon)
     if pm:
-        embed.set_footer(text=f"**You are receiving this message because you opted to track this champion in League of "
-                              f"Legends professional play. To disable these messages from Zoe Bot, reply "
-                              f"with '**~follow pro <champion_name>'**")
+        embed.set_footer(text=message)
     return embed
 
 
@@ -438,10 +459,24 @@ async def check_tracked_champions(bot):
                 matches_found = find_pro_play_matchup(champ)
                 if matches_found:
                     for game_info in matches_found:
-                        await update_cache(bot, user_id, game_info)
+                        await update_cache(bot, user_id)
+                        await send_pp_embed_user(bot, user_id, game_info)
 
 
-async def update_cache(bot, user_id, game_info):
+async def send_pp_embed_user(bot, user_id, game_info):
+    user = bot.get_user(user_id)
+    await user.send(embed=get_pp_embed_for_player(
+        game_info,
+        message=Constants.TRACKED_CHAMP_PM_MSG,
+        pm=True))
+
+
+# TODO: this
+async def send_msg_user():
+    return
+
+
+async def update_cache(bot, game_info):
     """
     Update cache with new game ids upon seeing them for the first time, else it does nothing and won't msg users
     """
@@ -451,8 +486,6 @@ async def update_cache(bot, user_id, game_info):
     champ_game_tuple = champion, game_id
     if champ_game_tuple not in cache:
         cache[champ_game_tuple] = datetime.datetime.now()
-        user = bot.get_user(user_id)
-        await user.send(embed=get_embed_for_player(game_info, pm=True))
 
 
 async def add_remove_favorite(message, champion_name, db, user_id, success_message):
