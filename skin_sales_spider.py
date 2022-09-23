@@ -119,7 +119,6 @@ def main():
     # full_image = np.vstack(rows)
     # # Full image of all 15 sale skins
     # imwrite('Data/full_skin_sales_image.jpg', full_image)
-    print(f'Skin sales spider finished scraping!')
 
 
 main()
