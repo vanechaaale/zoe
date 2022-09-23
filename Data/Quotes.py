@@ -30,7 +30,6 @@ Greet = ["Hey guys, so, cosmic change time, possible armageddon, twilight of the
          "I am supposed to give them a message! But I forgot the sonic pattern for it...",
          "Every day, every season... ends. And begin something new!",
          "I've got a magic present for you! Here it comes!",
-         "Delightful little world you have... I like it!",
          "Every day, every season... ends. And begin something new!",
          "This is the precipice of a new reality!",
          "Paradigm shift time!",
@@ -102,5 +101,5 @@ Zoe_join_server_message = [
     "This is the precipice of a new reality!",
     "Paradigm shift time!",
     "'I wonder who's around."
-
+    "Delightful little world you have... I like it!",
 ]
