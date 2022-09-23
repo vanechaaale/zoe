@@ -138,8 +138,8 @@ class BaseCommand(commands.Bot):
                                   "notifications from Zoe Bot.")
         async def follow(message, *champion_name):
             cmd_name = follow.name
-            error_message = f"Use **'~{cmd_name} pro <champion>, <champion> ...'** to follow champions in" \
-                            f" professional play, or use **'~{cmd_name} skin <champion>, <champion> ...'** to follow " \
+            error_message = f"Use '~{cmd_name} pro <champion>, <champion> ...' to follow champions in" \
+                            f" professional play, or use '~{cmd_name} skin <champion>, <champion> ...' to follow " \
                             f"weekly skin sales for champions!"
             if not champion_name:
                 await message.channel.send(error_message)
