@@ -249,6 +249,7 @@ class BaseCommand(commands.Bot):
             if args.lower() == 'spider':
                 os.system('python skin_sales_spider.py')
                 await channel.send("Successfully updated this week's champion skin sales.")
+                return
             await check_tracked_skins(self)
             await channel.send("Successfully notified users about their favorite champions' skin sales.")
 
