@@ -2,7 +2,7 @@
 import json
 import os
 # from datetime import datetime
-import Scrapy
+import scrapy
 from scrapy.crawler import CrawlerProcess
 
 # TODO: re import these when jpg file reading is fixed
