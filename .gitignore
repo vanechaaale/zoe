@@ -2,8 +2,7 @@
 *.vscode
 *__pycache__
 lolesports-api-python/
-Data/
 .idea/
-skin_sales_spider.py
+Data/
 not .idea folder
 .env
