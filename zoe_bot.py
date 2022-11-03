@@ -6,6 +6,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from discord.ext import commands, tasks
 import BaseMessageResponse
+import utilities
 from Commands import GuideCommand, LiveCommand, SaleCommand, FollowProCommand, FollowSkinCommand, \
     WeeklyRotationCommand, ClearCommand, FollowListCommand
 from Data import gifs
@@ -27,7 +28,7 @@ class BaseCommand(commands.Bot):
 
     def __init__(self):
         super().__init__(
-            command_prefix='~',
+            command_prefix=utilities.Constants.COMMAND_PREFIX,
             help_command=help_command,
             description="I'm Zoe, what's your name?",
             intents=intents
@@ -50,8 +51,10 @@ class BaseCommand(commands.Bot):
 
         @self.event
         async def on_ready():
-            activity = discord.Game(name="Do something fun! The world might be ending... Or not!")
+            activity = discord.Game(name="'Do something fun! The world might be ending... Or not!' \n "
+                                         f"Type '{utilities.Constants.COMMAND_PREFIX}help' for a list of commands!")
             await bot.change_presence(status=discord.Status.online, activity=activity)
+            # Start up all loop tasks
             update_weekly_skin_sales.start()
             update_pro_play.start()
             update_champ_data_skins_info.start()
@@ -190,6 +193,7 @@ class BaseCommand(commands.Bot):
         @self.command(hidden=True)
         @commands.is_owner()
         async def man_update_free_rotation(channel):
+            """Manually update free rotation and the displayed images"""
             update_free_rotation_images()
             self.free_champ_rotation = Constants.get_free_champ_rotation()
             await channel.send("Successfully updated this week's champion free rotation.")
@@ -198,7 +202,7 @@ class BaseCommand(commands.Bot):
                       brief="Show Zoe matchup tips! (WIP)",
                       description="View Zoe's matchup statistics against a champion")
         async def matchup(channel, champion):
-            """WORK IN PROGRESS"""
+            """ TODO: WORK IN PROGRESS"""
             champion.lower()
             await channel.send(get_zoe_error_message())
 
@@ -212,7 +216,7 @@ class BaseCommand(commands.Bot):
                       brief="Paddle Star Damage Calculator (WIP)",
                       description="Zoe Q damage calculator based on items, runes, and masteries")
         async def psdc(channel):
-            """WORK IN PROGRESS"""
+            """TODO: WORK IN PROGRESS"""
             await channel.send(get_zoe_error_message())
 
         @self.command(brief="Show the weekly free champion rotation",

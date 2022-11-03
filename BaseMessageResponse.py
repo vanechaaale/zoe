@@ -68,6 +68,7 @@ class Mooncake(BaseMessageResponse):
 
 class Xingqui(BaseMessageResponse):
     def invoke(self, message: discord.Message) -> bool:
+        # TODO: buggy with messages like 'xingqiu.' or doesnt work with multiple words in msg
         ratio = fuzz.ratio("Xingqiu", message.content.title())
         return 100 > ratio >= 75
 

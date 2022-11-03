@@ -80,6 +80,8 @@ class Constants:
         "Renata Glasc": "Renata",
     }
 
+    COMMAND_PREFIX = '~'
+
     TRACKED_CHAMP_PM_MSG = f"You are receiving this message because you opted to track this champion in League of " \
                            f"Legends professional play. To disable these messages from Zoe Bot, reply with " \
                            f"'~follow pro <champion_name>'"
@@ -142,7 +144,6 @@ def get_free_champion_ids():
 def init_champion_skins_dict():
     """
     Initialize CHAMP_SKINS_DICT: Dict['champion'] -> {Set of champ's skins by name}
-    Should be called every new patch
     """
     watcher = get_lol_watcher()
     latest = watcher.data_dragon.versions_for_region(Constants.REGION)['n']['champion']
@@ -199,19 +200,23 @@ async def check_tracked_skins(bot):
             skin_name = ' '.join(skin_data[0: len(skin_data) - 3])
             skin_rp_cost = ' '.join(skin_data[len(skin_data) - 2: len(skin_data)])
             skin_db = bot.favorite_skin_db
+            # Query DB for champion + skin on sale and send to users
             for champ_name in Constants.CHAMP_DICT.values():
-                if skin_name in Constants.CHAMP_SKINS_DICT[champ_name]:
-                    champion = Query()
-                    query_results = skin_db.get(champion['champion_name'] == champ_name)
-                    if query_results is not None:
-                        user_ids_list = query_results['user_ids']
-                        for user_id in user_ids_list:
-                            user = bot.get_user(user_id)
-                            await send_ss_embed_user(user, skin_name, skin_rp_cost, skin_image_url)
+                try:
+                    if skin_name in Constants.CHAMP_SKINS_DICT[champ_name]:
+                        champion = Query()
+                        query_results = skin_db.get(champion['champion_name'] == champ_name)
+                        if query_results is not None:
+                            user_ids_list = query_results['user_ids']
+                            for user_id in user_ids_list:
+                                user = bot.get_user(user_id)
+                                await send_ss_embed_user(user, skin_name, skin_rp_cost, skin_image_url)
+                # New champions won't have their skins on sale nor will ddragon have their skin names in a set, so skip
+                except KeyError:
+                    pass
             index += 1
 
 
-# TODO: this
 async def send_ss_embed_user(user, skin_name, skin_rp_cost, skin_image_url):
     embed = discord.Embed(color=0x87cefa)
     embed.add_field(name='Weekly Champion Skin Sales',
@@ -553,7 +558,7 @@ def get_champion_name_url(champion):
     if champion in Constants.API_URL_NAME_MATCHES.keys():
         return Constants.API_URL_NAME_MATCHES[champion]
     elif "'" in champion:
-        # Account for Void champion names ('Kai'sa') formatting
+        # Accounts for Void champion names ('Kai'sa') formatting
         return champion.replace("'", '').lower().capitalize()
     else:
         # and champions with space in their names ('Lee Sin'), as well as '.' (looking at you mundo)

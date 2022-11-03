@@ -3,6 +3,7 @@ from utilities import Constants
 
 
 async def follow_skin(message, *champion_name):
+    """Command to follow a champion for when their skins go on sale in the League Client Shop."""
     # If no args were given
     if not champion_name:
         await message.channel.send(
