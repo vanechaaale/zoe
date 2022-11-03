@@ -7,7 +7,8 @@ async def follow_skin(message, *champion_name):
     # If no args were given
     if not champion_name:
         await message.channel.send(
-            "use '~favorite <champion>, <champion>, **...**' to be notified when their skins go on sale!")
+            f"Use '{utilities.Constants.COMMAND_PREFIX} favorite <champion>, <champion>, **...**' to be notified when "
+            "their skins go on sale!")
         return
     else:
         await utilities.add_remove_favorite(

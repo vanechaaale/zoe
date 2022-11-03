@@ -141,9 +141,9 @@ class BaseCommand(commands.Bot):
                                   "notifications from Zoe Bot.")
         async def follow(message, *champion_name):
             cmd_name = follow.name
-            error_message = f"Use '~{cmd_name} pro <champion>, <champion> ...' to follow champions in" \
-                            f" professional play, or use '~{cmd_name} skin <champion>, <champion> ...' to follow " \
-                            f"weekly skin sales for champions!"
+            error_message = f"Use '{utilities.Constants.COMMAND_PREFIX}{cmd_name} pro <champion>, <champion> ...'" \
+                            f" to follow champions in professional play, or use '{utilities.Constants.COMMAND_PREFIX}" \
+                            f"{cmd_name} skin <champion>, <champion> ...' to follow weekly skin sales for champions!"
             if not champion_name:
                 await message.channel.send(error_message)
                 return
@@ -163,8 +163,9 @@ class BaseCommand(commands.Bot):
                       description="Show a list of all champions that Zoe Bot will notify a Discord User for when one "
                                   "or more champions are being played in a professional game, or if a champion has a "
                                   "skin on sale this week. Remove a champion from this list with the command "
-                                  "'~follow pro <champion>, <champion> ...' for professional play, or use "
-                                  "'~follow skin <champion>, <champion> ...' for champion skins.")
+                                  f"'{utilities.Constants.COMMAND_PREFIX}follow pro <champion>, <champion> ...'"
+                                  f" for professional play, or use '{utilities.Constants.COMMAND_PREFIX}follow skin"
+                                  f" <champion>, <champion> ...' for champion skins.")
         async def following(message):
             await FollowListCommand.following(message)
 
@@ -178,8 +179,8 @@ class BaseCommand(commands.Bot):
 
         @self.command(brief="Show live professional games of a champion",
                       description="Shows a list of all live professional games where the "
-                                  "champion is being played, or use '~live all' to see a list of all champions in "
-                                  "live games.")
+                                  f"champion is being played, or use '{utilities.Constants.COMMAND_PREFIX}live all'"
+                                  f" to see a list of all champions in live games.")
         async def live(channel, *champion_name):
             await LiveCommand.live(channel, *champion_name)
 
@@ -226,9 +227,9 @@ class BaseCommand(commands.Bot):
 
         @self.command(brief="Show champion skins on sale this week",
                       description="Show list of all champion skins on sale (which refreshes every Monday at 3 pm EST),"
-                                  "or use '~sale all' to see a list of all skins on sale "
-                                  "(not recommended by yours truly, because I think it's quite ugly, but it's more "
-                                  "convenient I guess")
+                                  f"or use '{utilities.Constants.COMMAND_PREFIX}sale all' to see a list of all skins"
+                                  " on sale (not recommended by yours truly, because I think it's quite ugly, "
+                                  "but it's more convenient I guess")
         async def sale(channel, *kwargs):
             command_args = ' '.join(kwargs)
             if channel.channel.type.name != 'private':

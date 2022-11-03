@@ -1,5 +1,7 @@
 import random
 import re
+import string
+
 import discord
 from Data import Quotes
 from fuzzywuzzy import fuzz
@@ -69,7 +71,10 @@ class Mooncake(BaseMessageResponse):
 class Xingqui(BaseMessageResponse):
     def invoke(self, message: discord.Message) -> bool:
         # TODO: buggy with messages like 'xingqiu.' or doesnt work with multiple words in msg
-        ratio = fuzz.ratio("Xingqiu", message.content.title())
+        ratio = 0
+        for word in message.content.split(' '):
+            word = word.translate(str.maketrans('', '', string.punctuation))
+            ratio = fuzz.ratio("Xingqiu", word.title())
         return 100 > ratio >= 75
 
     async def execute(self, message: discord.Message):
