@@ -12,12 +12,14 @@ async def following(message):
     pro_play_following = utilities.get_following_list(
         user_id=user_id,
         db=Constants.DB,
-        success_message="following live professional games for:"
+        success_message="following live professional games for:",
+        message=message
     )
     skin_following = utilities.get_following_list(
         user_id=user_id,
         db=Constants.SKIN_DB,
         success_message="following skin sales for:",
+        message=message,
         second=True
     )
     await message.channel.send(f"{pro_play_following}, and {skin_following}")

@@ -48,6 +48,7 @@ class BaseCommand(commands.Bot):
             intents=intents)
         self.db = Constants.DB
         self.favorite_skin_db = Constants.SKIN_DB
+        # self.champion_icon_pngs = Constants.get_champion_icon_pngs()
 
         @self.event
         async def on_ready():

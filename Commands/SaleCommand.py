@@ -47,6 +47,7 @@ async def sale(channel, bot):
         return str(r.emoji) in [left_arrow, right_arrow] and r.message.id == msg_id and not u.bot
 
     # Reacting to the message will change the current skin displayed
+    embed_dict = embed.to_dict()
     while True:
         try:
             # User adds a reaction to the message, which is immediately removed
@@ -57,7 +58,6 @@ async def sale(channel, bot):
                 count = count - 1 if count > 0 else 14
             if str(reaction.emoji) == right_arrow:
                 count = count + 1 if count < 14 else 0
-            embed_dict = embed.to_dict()
             embed_dict['fields'][0]['name'] = skin_sales_data[count][0]
             embed_dict['fields'][0]['value'] = skin_sales_data[count][1]
             embed_dict['image']['url'] = image_urls_list[count]

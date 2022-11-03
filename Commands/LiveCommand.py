@@ -12,7 +12,7 @@ async def live(channel, *champion_name):
     if not champion_name:
         await channel.send(
             f"use **'{utilities.Constants.COMMAND_PREFIX}live <champion>'** to search for a champion in a live pro "
-            f"play!")
+            "play!")
         return
     elif original_message.lower() == "all":
         await pro_all(channel)
