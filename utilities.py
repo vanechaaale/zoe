@@ -133,7 +133,9 @@ class Constants:
 
     @classmethod
     def get_champion_icon_pngs(cls):
-        # TODO: this
+        """
+        Method to fetch all champion icon pngs and write them to a directory for custom emoji usage.
+        """
         watcher = get_lol_watcher()
         latest = watcher.data_dragon.versions_for_region(Constants.REGION)['n']['champion']
         for champion in Constants.get_champion_skins_dict().keys():
@@ -178,9 +180,8 @@ def init_champion_skins_dict():
     return champ_skins_dict
 
 
-# Does the str start with '~'?
 def is_command(message):
-    return message.content[0] == '~'
+    return message.content[0] == Constants.COMMAND_PREFIX
 
 
 async def clear_cache(cache, h):
@@ -383,6 +384,8 @@ async def pro_all(channel):
     if len(all_live_champs) == 0 or all_live_champs is None:
         await channel.send("No champions found in live professional games :(")
     else:
+        # TODO: this might break because of channel usage
+        all_live_champs = add_emojis_after_champ_names(all_live_champs, channel)
         await channel.send("All champions in live professional games: " + ', '.join(all_live_champs))
 
 

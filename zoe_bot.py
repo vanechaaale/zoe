@@ -15,7 +15,8 @@ from utilities import *
 # runs the skin sales webscraper and automatically updates all the skins on sale in the league shop
 # import skin_sales_spider
 
-help_command = commands.DefaultHelpCommand(no_category="List of Zoe Bot Commands, use prefix '~'")
+help_command = commands.DefaultHelpCommand(
+    no_category=f"List of Zoe Bot Commands, use prefix '{utilities.Constants.COMMAND_PREFIX}'")
 intents = discord.Intents.default()
 intents.members = True
 
@@ -94,12 +95,13 @@ class BaseCommand(commands.Bot):
             await asyncio.sleep(check_tracked_mins)
 
         @tasks.loop(hours=1)
-        # Update champion data and champion skins dictionaries every day at 12 PM EST
+        # Update champion data, champion skins dictionaries, and champion icon pngs every day at 12 PM EST
         async def update_champ_data_skins_info():
             current_hour = int(dt.datetime.utcnow().strftime("%H"))
             if current_hour == 16:
                 self.champ_skins_dict = init_champion_skins_dict()
                 self.champ_dict = Constants.get_champ_dict(refresh_dict=True)
+                Constants.get_champion_icon_pngs()
 
         @self.event
         async def on_guild_join(guild):
