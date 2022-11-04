@@ -559,7 +559,8 @@ def get_following_list(user_id, db, success_message, message, second=False):
         if query_results is not None:
             user_ids_list = query_results['user_ids']
             if user_id in user_ids_list:
-                tracked_list = add_emojis_after_champ_names(tracked_list, message)
+                tracked_list.append(champ_name)
+    tracked_list = add_emojis_after_champ_names(tracked_list, message)
     if len(tracked_list) != 0:
         # following skin sales for:
         # following live professional games for:
