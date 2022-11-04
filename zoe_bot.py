@@ -6,6 +6,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from discord.ext import commands, tasks
 import BaseMessageResponse
+import utilities
 from Commands import GuideCommand, LiveCommand, SaleCommand, FollowProCommand, FollowSkinCommand, \
     WeeklyRotationCommand, ClearCommand, FollowListCommand
 from Data import gifs
@@ -14,7 +15,8 @@ from utilities import *
 # runs the skin sales webscraper and automatically updates all the skins on sale in the league shop
 # import skin_sales_spider
 
-help_command = commands.DefaultHelpCommand(no_category="List of Zoe Bot Commands, use prefix '~'")
+help_command = commands.DefaultHelpCommand(
+    no_category=f"List of Zoe Bot Commands, use prefix '{utilities.Constants.COMMAND_PREFIX}'")
 intents = discord.Intents.default()
 intents.members = True
 
@@ -27,7 +29,7 @@ class BaseCommand(commands.Bot):
 
     def __init__(self):
         super().__init__(
-            command_prefix='~',
+            command_prefix=utilities.Constants.COMMAND_PREFIX,
             help_command=help_command,
             description="I'm Zoe, what's your name?",
             intents=intents
@@ -47,11 +49,14 @@ class BaseCommand(commands.Bot):
             intents=intents)
         self.db = Constants.DB
         self.favorite_skin_db = Constants.SKIN_DB
+        # self.champion_icon_pngs = Constants.get_champion_icon_pngs()
 
         @self.event
         async def on_ready():
-            activity = discord.Game(name="Do something fun! The world might be ending... Or not!")
+            activity = discord.Game(name="'Do something fun! The world might be ending... Or not!' \n "
+                                         f"Type '{utilities.Constants.COMMAND_PREFIX}help' for a list of commands!")
             await bot.change_presence(status=discord.Status.online, activity=activity)
+            # Start up all loop tasks
             update_weekly_skin_sales.start()
             update_pro_play.start()
             update_champ_data_skins_info.start()
@@ -90,12 +95,13 @@ class BaseCommand(commands.Bot):
             await asyncio.sleep(check_tracked_mins)
 
         @tasks.loop(hours=1)
-        # Update champion data and champion skins dictionaries every day at 12 PM EST
+        # Update champion data, champion skins dictionaries, and champion icon pngs every day at 12 PM EST
         async def update_champ_data_skins_info():
             current_hour = int(dt.datetime.utcnow().strftime("%H"))
             if current_hour == 16:
                 self.champ_skins_dict = init_champion_skins_dict()
                 self.champ_dict = Constants.get_champ_dict(refresh_dict=True)
+                Constants.get_champion_icon_pngs()
 
         @self.event
         async def on_guild_join(guild):
@@ -138,9 +144,9 @@ class BaseCommand(commands.Bot):
                                   "notifications from Zoe Bot.")
         async def follow(message, *champion_name):
             cmd_name = follow.name
-            error_message = f"Use '~{cmd_name} pro <champion>, <champion> ...' to follow champions in" \
-                            f" professional play, or use '~{cmd_name} skin <champion>, <champion> ...' to follow " \
-                            f"weekly skin sales for champions!"
+            error_message = f"Use '{utilities.Constants.COMMAND_PREFIX}{cmd_name} pro <champion>, <champion> ...'" \
+                            f" to follow champions in professional play, or use '{utilities.Constants.COMMAND_PREFIX}" \
+                            f"{cmd_name} skin <champion>, <champion> ...' to follow weekly skin sales for champions!"
             if not champion_name:
                 await message.channel.send(error_message)
                 return
@@ -160,8 +166,9 @@ class BaseCommand(commands.Bot):
                       description="Show a list of all champions that Zoe Bot will notify a Discord User for when one "
                                   "or more champions are being played in a professional game, or if a champion has a "
                                   "skin on sale this week. Remove a champion from this list with the command "
-                                  "'~follow pro <champion>, <champion> ...' for professional play, or use "
-                                  "'~follow skin <champion>, <champion> ...' for champion skins.")
+                                  f"'{utilities.Constants.COMMAND_PREFIX}follow pro <champion>, <champion> ...'"
+                                  f" for professional play, or use '{utilities.Constants.COMMAND_PREFIX}follow skin"
+                                  f" <champion>, <champion> ...' for champion skins.")
         async def following(message):
             await FollowListCommand.following(message)
 
@@ -175,8 +182,8 @@ class BaseCommand(commands.Bot):
 
         @self.command(brief="Show live professional games of a champion",
                       description="Shows a list of all live professional games where the "
-                                  "champion is being played, or use '~live all' to see a list of all champions in "
-                                  "live games.")
+                                  f"champion is being played, or use '{utilities.Constants.COMMAND_PREFIX}live all'"
+                                  f" to see a list of all champions in live games.")
         async def live(channel, *champion_name):
             await LiveCommand.live(channel, *champion_name)
 
@@ -190,6 +197,7 @@ class BaseCommand(commands.Bot):
         @self.command(hidden=True)
         @commands.is_owner()
         async def man_update_free_rotation(channel):
+            """Manually update free rotation and the displayed images"""
             update_free_rotation_images()
             self.free_champ_rotation = Constants.get_free_champ_rotation()
             await channel.send("Successfully updated this week's champion free rotation.")
@@ -198,7 +206,7 @@ class BaseCommand(commands.Bot):
                       brief="Show Zoe matchup tips! (WIP)",
                       description="View Zoe's matchup statistics against a champion")
         async def matchup(channel, champion):
-            """WORK IN PROGRESS"""
+            """ TODO: WORK IN PROGRESS"""
             champion.lower()
             await channel.send(get_zoe_error_message())
 
@@ -212,7 +220,7 @@ class BaseCommand(commands.Bot):
                       brief="Paddle Star Damage Calculator (WIP)",
                       description="Zoe Q damage calculator based on items, runes, and masteries")
         async def psdc(channel):
-            """WORK IN PROGRESS"""
+            """TODO: WORK IN PROGRESS"""
             await channel.send(get_zoe_error_message())
 
         @self.command(brief="Show the weekly free champion rotation",
@@ -222,9 +230,9 @@ class BaseCommand(commands.Bot):
 
         @self.command(brief="Show champion skins on sale this week",
                       description="Show list of all champion skins on sale (which refreshes every Monday at 3 pm EST),"
-                                  "or use '~sale all' to see a list of all skins on sale "
-                                  "(not recommended by yours truly, because I think it's quite ugly, but it's more "
-                                  "convenient I guess")
+                                  f"or use '{utilities.Constants.COMMAND_PREFIX}sale all' to see a list of all skins"
+                                  " on sale (not recommended by yours truly, because I think it's quite ugly, "
+                                  "but it's more convenient I guess")
         async def sale(channel, *kwargs):
             command_args = ' '.join(kwargs)
             if channel.channel.type.name != 'private':

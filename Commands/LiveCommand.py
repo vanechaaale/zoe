@@ -1,5 +1,6 @@
 import discord
 
+import utilities
 from utilities import check_for_special_name_match, find_pro_play_matchup, pro_all, get_pp_embed_for_player, \
     get_fuzzy_match, Constants
 
@@ -10,7 +11,8 @@ async def live(channel, *champion_name):
     original_message = ' '.join(champion_name)
     if not champion_name:
         await channel.send(
-            "use **'~live <champion>'** to search for a champion in a live pro play!")
+            f"use **'{utilities.Constants.COMMAND_PREFIX}live <champion>'** to search for a champion in a live pro "
+            "play!")
         return
     elif original_message.lower() == "all":
         await pro_all(channel)

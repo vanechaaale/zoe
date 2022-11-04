@@ -1,5 +1,6 @@
 from tinydb import Query
 
+import utilities
 from utilities import Constants
 
 
@@ -17,9 +18,10 @@ async def clear(message, *args):
         db = Constants.SKIN_DB
         success_message = f"Successfully cleared <@{user_id}>'s list of champions followed in weekly skin sales."
     else:
-        await message.channel.send("Use **'~clear pro'** to clear your list of champions followed in professional"
-                                   " play, or **'~clear fav'** to clear your list of champions followed in the weekly "
-                                   "skin sales rotation.")
+        await message.channel.send(
+            f"Use **'{utilities.Constants.COMMAND_PREFIX}clear pro'** to clear your list of champions followed in "
+            f"professional play, or **'{utilities.Constants.COMMAND_PREFIX}clear fav'** to clear your list of champions"
+            " followed in the weekly skin sales rotation.")
         return
     # Clear user's list of favorites/followed
     for champ_name in Constants.CHAMP_DICT.values():

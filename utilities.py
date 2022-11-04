@@ -80,13 +80,15 @@ class Constants:
         "Renata Glasc": "Renata",
     }
 
-    TRACKED_CHAMP_PM_MSG = f"You are receiving this message because you opted to track this champion in League of " \
-                           f"Legends professional play. To disable these messages from Zoe Bot, reply with " \
-                           f"'~follow pro <champion_name>'"
+    COMMAND_PREFIX = '~'
 
-    TRACKED_SKIN_PM_MSG = f"You are receiving this message because you opted to track League of " \
-                          f"Legends skin sales for this champion. To disable these messages, reply " \
-                          f"with '~follow skin <champion_name>'"
+    TRACKED_CHAMP_PM_MSG = "You are receiving this message because you opted to track this champion in League of " \
+                           "Legends professional play. To disable these messages from Zoe Bot, reply with " \
+                           f"'{COMMAND_PREFIX}follow pro <champion_name>'"
+
+    TRACKED_SKIN_PM_MSG = "You are receiving this message because you opted to track League of " \
+                          "Legends skin sales for this champion. To disable these messages, reply " \
+                          f"with '{COMMAND_PREFIX}follow skin <champion_name>'"
 
     # Class Constants: CHAMP_DICT, CHAMP_SKINS_DICT
     CHAMP_DICT = dict()
@@ -129,6 +131,19 @@ class Constants:
         cls.FREE_CHAMPS = free_rotation
         return cls.FREE_CHAMPS
 
+    @classmethod
+    def get_champion_icon_pngs(cls):
+        """
+        Method to fetch all champion icon pngs and write them to a directory for custom emoji usage.
+        """
+        watcher = get_lol_watcher()
+        latest = watcher.data_dragon.versions_for_region(Constants.REGION)['n']['champion']
+        for champion in Constants.get_champion_skins_dict().keys():
+            # write each champion icon png to Data/champion_icon_pngs
+            url_champion = get_champion_name_url(champion)
+            png_url = f'http://ddragon.leagueoflegends.com/cdn/{latest}/img/champion/{url_champion}.png'
+            urllib.request.urlretrieve(png_url, f'Data/champion_icon_pngs/{url_champion}.png')
+
 
 async def sendDm(bot, user_id, message):
     user = await bot.get_user(user_id)
@@ -142,7 +157,6 @@ def get_free_champion_ids():
 def init_champion_skins_dict():
     """
     Initialize CHAMP_SKINS_DICT: Dict['champion'] -> {Set of champ's skins by name}
-    Should be called every new patch
     """
     watcher = get_lol_watcher()
     latest = watcher.data_dragon.versions_for_region(Constants.REGION)['n']['champion']
@@ -166,9 +180,8 @@ def init_champion_skins_dict():
     return champ_skins_dict
 
 
-# Does the str start with '~'?
 def is_command(message):
-    return message.content[0] == '~'
+    return message.content[0] == Constants.COMMAND_PREFIX
 
 
 async def clear_cache(cache, h):
@@ -199,19 +212,23 @@ async def check_tracked_skins(bot):
             skin_name = ' '.join(skin_data[0: len(skin_data) - 3])
             skin_rp_cost = ' '.join(skin_data[len(skin_data) - 2: len(skin_data)])
             skin_db = bot.favorite_skin_db
+            # Query DB for champion + skin on sale and send to users
             for champ_name in Constants.CHAMP_DICT.values():
-                if skin_name in Constants.CHAMP_SKINS_DICT[champ_name]:
-                    champion = Query()
-                    query_results = skin_db.get(champion['champion_name'] == champ_name)
-                    if query_results is not None:
-                        user_ids_list = query_results['user_ids']
-                        for user_id in user_ids_list:
-                            user = bot.get_user(user_id)
-                            await send_ss_embed_user(user, skin_name, skin_rp_cost, skin_image_url)
+                try:
+                    if skin_name in Constants.CHAMP_SKINS_DICT[champ_name]:
+                        champion = Query()
+                        query_results = skin_db.get(champion['champion_name'] == champ_name)
+                        if query_results is not None:
+                            user_ids_list = query_results['user_ids']
+                            for user_id in user_ids_list:
+                                user = bot.get_user(user_id)
+                                await send_ss_embed_user(user, skin_name, skin_rp_cost, skin_image_url)
+                # New champions won't have their skins on sale nor will ddragon have their skin names in a set, so skip
+                except KeyError:
+                    pass
             index += 1
 
 
-# TODO: this
 async def send_ss_embed_user(user, skin_name, skin_rp_cost, skin_image_url):
     embed = discord.Embed(color=0x87cefa)
     embed.add_field(name='Weekly Champion Skin Sales',
@@ -367,6 +384,8 @@ async def pro_all(channel):
     if len(all_live_champs) == 0 or all_live_champs is None:
         await channel.send("No champions found in live professional games :(")
     else:
+        # TODO: this might break because of channel usage
+        all_live_champs = add_emojis_after_champ_names(all_live_champs, channel)
         await channel.send("All champions in live professional games: " + ', '.join(all_live_champs))
 
 
@@ -521,6 +540,9 @@ async def add_remove_favorite(message, champion_name, db, user_id, success_messa
             user_ids_list.remove(user_id)
             db.update({'user_ids': user_ids_list}, champion['champion_name'] == champion_name)
             removed.add(champion_name)
+    # Add champion emojis after every champion name
+    added = add_emojis_after_champ_names(list(added), message)
+    removed = add_emojis_after_champ_names(list(removed), message)
     # NGL i have no idea if 'else None' is bad here
     await message.channel.send(f"<@{user_id}> is now {success_message} {', '.join(added)}.") if added else None
     await message.channel.send(
@@ -529,7 +551,7 @@ async def add_remove_favorite(message, champion_name, db, user_id, success_messa
         f"No champion with name(s): '{' '.join(not_found)}' found.") if not_found else None
 
 
-def get_following_list(user_id, db, success_message, second=False):
+def get_following_list(user_id, db, success_message, message, second=False):
     tracked_list = []
     for champ_name in Constants.CHAMP_DICT.values():
         champion = Query()
@@ -537,7 +559,7 @@ def get_following_list(user_id, db, success_message, second=False):
         if query_results is not None:
             user_ids_list = query_results['user_ids']
             if user_id in user_ids_list:
-                tracked_list.append(champ_name)
+                tracked_list = add_emojis_after_champ_names(tracked_list, message)
     if len(tracked_list) != 0:
         # following skin sales for:
         # following live professional games for:
@@ -553,13 +575,28 @@ def get_champion_name_url(champion):
     if champion in Constants.API_URL_NAME_MATCHES.keys():
         return Constants.API_URL_NAME_MATCHES[champion]
     elif "'" in champion:
-        # Account for Void champion names ('Kai'sa') formatting
+        # Accounts for Void champion names ('Kai'sa') formatting
         return champion.replace("'", '').lower().capitalize()
     else:
         # and champions with space in their names ('Lee Sin'), as well as '.' (looking at you mundo)
         url_champion = champion.replace(' ', '').replace('.', '') if ' ' in champion or '.' in champion \
             else champion
         return url_champion
+
+
+def add_emojis_after_champ_names(champion_name_list, message):
+    """A method to add custom champion icon emojis after every champion name in a list of champ names,
+    and then return the altered list of champion names"""
+    new_name_list = []
+    for champ_name in champion_name_list:
+        # Add emojis after each champion name
+        emoji_name = get_champion_name_url(champ_name)
+        emoji = None
+        # Search all guilds for champion emojis
+        for guild in message.bot.guilds:
+            emoji = discord.utils.get(guild.emojis, name=emoji_name) if emoji is None else emoji
+        new_name_list.append(champ_name + f' {emoji}')
+    return new_name_list
 
 
 def update_free_rotation_images():

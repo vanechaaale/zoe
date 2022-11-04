@@ -2,6 +2,7 @@ import discord
 
 
 async def guide(channel):
+    # TODO: stop hardcoding all the values zz
     detention = discord.Embed(
         color=0xffb6c1,
     )
